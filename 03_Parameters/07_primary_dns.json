@@ -1,0 +1,7 @@
+{
+	"07xPrimaryDNS": {
+		"Description": "The primary DNS.",
+		"Type": "String",
+		"Default" : "1.1.1.1"
+	}
+}

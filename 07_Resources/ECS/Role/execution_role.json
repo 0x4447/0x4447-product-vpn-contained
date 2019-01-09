@@ -1,0 +1,24 @@
+{
+	"ECSVPNTaskExecutionRole": {
+		"Type": "AWS::IAM::Role",
+		"Properties": {
+			"RoleName": { "Fn::Sub": "${AWS::StackName}-ECS-Execution" },
+			"AssumeRolePolicyDocument": {
+				"Version": "2008-10-17",
+				"Statement": [
+					{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": "ecs-tasks.amazonaws.com"
+						},
+						"Action": "sts:AssumeRole"
+					}
+				]
+			},
+			"ManagedPolicyArns": [
+				"arn:aws:iam::aws:policy/CloudWatchFullAccess",
+				"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+			]
+		}
+	}
+}

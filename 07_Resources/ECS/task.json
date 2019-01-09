@@ -1,0 +1,54 @@
+{
+	"ECSVPNTask": {
+		"Type": "AWS::ECS::TaskDefinition",
+		"Properties": {
+			"Family": { "Ref": "AWS::StackName" },
+			"Volumes": [
+				{
+					"Name": "modules",
+					"Host": {
+						"SourcePath": "/lib/modules"
+					}
+				}
+			],
+			"ExecutionRoleArn": { "Ref": "ECSVPNTaskExecutionRole" },
+			"TaskRoleArn": { "Ref": "ECSVPNTaskTaskRole" },
+			"Memory": "256",
+			"RequiresCompatibilities": [ "EC2" ],
+			"NetworkMode": "bridge",
+			"ContainerDefinitions": [{
+				"Environment": [
+					{ "Name": "VPN_USER", "Value": { "Ref": "04xUsername" } },
+					{ "Name": "VPN_PASSWORD", "Value": { "Ref": "05xPassword" } },
+					{ "Name": "VPN_IPSEC_PSK", "Value": { "Ref": "06xIPSec" } },
+					{ "Name": "VPN_DNS_SRV1", "Value": { "Ref": "07xPrimaryDNS" } },
+					{ "Name": "VPN_DNS_SRV2", "Value": { "Ref": "08xSecondaryDNS" } }
+				],
+				"Image": "hwdsl2/ipsec-vpn-server",
+				"Memory": 128,
+				"MountPoints": [
+					{
+						"ReadOnly": true,
+						"ContainerPath": "/lib/modules",
+						"SourceVolume": "modules"
+					}
+				],
+				"Name": "VPN",
+				"PortMappings": [
+					{
+						"HostPort": 4500,
+						"Protocol": "udp",
+						"ContainerPort": 4500
+					},
+					{
+						"HostPort": 500,
+						"Protocol": "udp",
+						"ContainerPort": 500
+					}
+				],
+				"Privileged": true,
+				"ReadonlyRootFilesystem": false
+			}]
+		}
+	}
+}

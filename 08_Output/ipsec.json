@@ -1,0 +1,6 @@
+{
+	"OutputIPSec": {
+		"Value": { "Ref": "06xIPSec" },
+		"Description": "Your IPSec Value."
+	}
+}

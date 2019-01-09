@@ -1,0 +1,16 @@
+{
+	"CloudWatchDashboard": {
+		"Type": "AWS::CloudWatch::Dashboard",
+		"Properties": {
+			"DashboardName": { "Ref": "AWS::StackName" },
+			"DashboardBody": {
+				"Fn::Sub": [
+					"{\r\n    \"widgets\": [\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 9,\r\n            \"y\": 0,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS\/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\" ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Network In & Out\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 3,\r\n            \"width\": 24,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS\/EC2\", \"CPUUtilization\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\" ],\r\n                    [ \".\", \"CPUCreditUsage\", \".\", \".\", { \"yAxis\": \"right\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"CPU & Credit Usage\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 0,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS\/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"id\": \"m1\", \"stat\": \"Sum\" } ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\", \"id\": \"m2\", \"stat\": \"Sum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Total In & Out\",\r\n                \"period\": 300\r\n            }\r\n        }\r\n    ]\r\n}",
+					{
+						"AutoScalingGroupName": { "Ref": "EC2AutoScalingGroup" }
+					}
+				]
+			}
+		}
+	}
+}

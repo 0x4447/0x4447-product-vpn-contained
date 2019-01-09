@@ -1,0 +1,6 @@
+{
+	"OutputUsername": {
+		"Value": { "Ref": "04xUsername" },
+		"Description": "Your VPN Username."
+	}
+}

@@ -1,0 +1,676 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "This stack deploys a containerized VPN server for one user.",
+	"Parameters": {
+		"02xSubnet": {
+			"Description": "Select the subnet where to deploy the VPN.",
+			"ConstraintDescription": "must be the name of an existing subnet",
+			"Type": "AWS::EC2::Subnet::Id"
+		},
+		"01xVPC": {
+			"Description": "Select the VPC where to deploy the VPN.",
+			"ConstraintDescription": "must be the name of an existing subnet",
+			"Type": "AWS::EC2::VPC::Id"
+		},
+		"04xUsername": {
+			"Description": "The user name for your VPN.",
+			"Type": "String",
+			"MinLength": 3
+		},
+		"05xPassword": {
+			"Description": "The password for your VPN.",
+			"Type": "String",
+			"NoEcho": true,
+			"MinLength": 10
+		},
+		"06xIPSec": {
+			"Description": "A random string IPSec PSK string.",
+			"Type": "String",
+			"NoEcho": true,
+			"MinLength": 10
+		},
+		"07xPrimaryDNS": {
+			"Description": "The primary DNS.",
+			"Type": "String",
+			"Default": "1.1.1.1"
+		},
+		"08xSecondaryDNS": {
+			"Description": "The secondary DNS.",
+			"Type": "String",
+			"Default": "1.0.0.1"
+		},
+		"09xEIP": {
+			"Description": "Type the elastic IP ID that you'd like to associate to the EC2 instance.",
+			"Type": "String"
+		},
+		"Email": {
+			"Description": "Provide an email where to send errors from alarms",
+			"Type": "String"
+		},
+		"KeyName": {
+			"Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+			"Type": "AWS::EC2::KeyPair::KeyName",
+			"ConstraintDescription": "Can contain only ASCII characters."
+		}
+	},
+	"Resources": {
+		"Subscription": {
+			"Type": "AWS::SNS::Subscription",
+			"Properties": {
+				"Endpoint": {
+					"Ref": "Email"
+				},
+				"Protocol": "email",
+				"TopicArn": {
+					"Ref": "SNSTopic"
+				}
+			}
+		},
+		"SNSTopic": {
+			"Type": "AWS::SNS::Topic",
+			"Properties": {
+				"DisplayName": {
+					"Fn::Sub": "${AWS::StackName}-Alert"
+				}
+			}
+		},
+		"ECSVPNCluster": {
+			"Type": "AWS::ECS::Cluster",
+			"Properties": {
+				"ClusterName": {
+					"Ref": "AWS::StackName"
+				}
+			}
+		},
+		"ECSVPNService": {
+			"Type": "AWS::ECS::Service",
+			"Properties": {
+				"Cluster": {
+					"Ref": "ECSVPNCluster"
+				},
+				"LaunchType": "EC2",
+				"SchedulingStrategy": "DAEMON",
+				"TaskDefinition": {
+					"Ref": "ECSVPNTask"
+				}
+			}
+		},
+		"ECSVPNTask": {
+			"Type": "AWS::ECS::TaskDefinition",
+			"Properties": {
+				"Family": {
+					"Ref": "AWS::StackName"
+				},
+				"Volumes": [
+					{
+						"Name": "modules",
+						"Host": {
+							"SourcePath": "/lib/modules"
+						}
+					}
+				],
+				"ExecutionRoleArn": {
+					"Ref": "ECSVPNTaskExecutionRole"
+				},
+				"TaskRoleArn": {
+					"Ref": "ECSVPNTaskTaskRole"
+				},
+				"Memory": "256",
+				"RequiresCompatibilities": [
+					"EC2"
+				],
+				"NetworkMode": "bridge",
+				"ContainerDefinitions": [
+					{
+						"Environment": [
+							{
+								"Name": "VPN_USER",
+								"Value": {
+									"Ref": "04xUsername"
+								}
+							},
+							{
+								"Name": "VPN_PASSWORD",
+								"Value": {
+									"Ref": "05xPassword"
+								}
+							},
+							{
+								"Name": "VPN_IPSEC_PSK",
+								"Value": {
+									"Ref": "06xIPSec"
+								}
+							},
+							{
+								"Name": "VPN_DNS_SRV1",
+								"Value": {
+									"Ref": "07xPrimaryDNS"
+								}
+							},
+							{
+								"Name": "VPN_DNS_SRV2",
+								"Value": {
+									"Ref": "08xSecondaryDNS"
+								}
+							}
+						],
+						"Image": "hwdsl2/ipsec-vpn-server",
+						"Memory": 128,
+						"MountPoints": [
+							{
+								"ReadOnly": true,
+								"ContainerPath": "/lib/modules",
+								"SourceVolume": "modules"
+							}
+						],
+						"Name": "VPN",
+						"PortMappings": [
+							{
+								"HostPort": 4500,
+								"Protocol": "udp",
+								"ContainerPort": 4500
+							},
+							{
+								"HostPort": 500,
+								"Protocol": "udp",
+								"ContainerPort": 500
+							}
+						],
+						"Privileged": true,
+						"ReadonlyRootFilesystem": false
+					}
+				]
+			}
+		},
+		"ECSVPNTaskExecutionRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": {
+					"Fn::Sub": "${AWS::StackName}-ECS-Execution"
+				},
+				"AssumeRolePolicyDocument": {
+					"Version": "2008-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "ecs-tasks.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/CloudWatchFullAccess",
+					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+				]
+			}
+		},
+		"ECSVPNTaskTaskRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": {
+					"Fn::Sub": "${AWS::StackName}-ECS-Task"
+				},
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "ecs-tasks.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/CloudWatchFullAccess",
+					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+				]
+			}
+		},
+		"CloudWatchDashboard": {
+			"Type": "AWS::CloudWatch::Dashboard",
+			"Properties": {
+				"DashboardName": {
+					"Ref": "AWS::StackName"
+				},
+				"DashboardBody": {
+					"Fn::Sub": [
+						"{\r\n    \"widgets\": [\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 9,\r\n            \"y\": 0,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\" ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Network In & Out\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 3,\r\n            \"width\": 24,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"CPUUtilization\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\" ],\r\n                    [ \".\", \"CPUCreditUsage\", \".\", \".\", { \"yAxis\": \"right\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"CPU & Credit Usage\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 0,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"id\": \"m1\", \"stat\": \"Sum\" } ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\", \"id\": \"m2\", \"stat\": \"Sum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Total In & Out\",\r\n                \"period\": 300\r\n            }\r\n        }\r\n    ]\r\n}",
+						{
+							"AutoScalingGroupName": {
+								"Ref": "EC2AutoScalingGroup"
+							}
+						}
+					]
+				}
+			}
+		},
+		"CPUAlarm": {
+			"Type": "AWS::CloudWatch::Alarm",
+			"Properties": {
+				"AlarmName": {
+					"Fn::Sub": "${AWS::StackName}-CPU"
+				},
+				"AlarmDescription": "Track CPU utilization across all the EC2",
+				"TreatMissingData": "notBreaching",
+				"ActionsEnabled": true,
+				"AlarmActions": [
+					{
+						"Ref": "SNSTopic"
+					}
+				],
+				"ComparisonOperator": "GreaterThanOrEqualToThreshold",
+				"EvaluationPeriods": 1,
+				"Unit": "Count",
+				"Period": 300,
+				"Threshold": 75,
+				"Namespace": "AWS/EC2",
+				"MetricName": "CPUUtilization",
+				"Statistic": "Average",
+				"Dimensions": [
+					{
+						"Name": "AutoScalingGroupName",
+						"Value": {
+							"Ref": "EC2AutoScalingGroup"
+						}
+					}
+				]
+			}
+		},
+		"RAMAlarm": {
+			"Type": "AWS::CloudWatch::Alarm",
+			"Properties": {
+				"AlarmName": {
+					"Fn::Sub": "${AWS::StackName}-RAM"
+				},
+				"AlarmDescription": "Track RAM utilization across all the EC2",
+				"TreatMissingData": "notBreaching",
+				"ActionsEnabled": true,
+				"AlarmActions": [
+					{
+						"Ref": "SNSTopic"
+					}
+				],
+				"ComparisonOperator": "GreaterThanOrEqualToThreshold",
+				"EvaluationPeriods": 1,
+				"Unit": "Count",
+				"Period": 300,
+				"Threshold": 400000000,
+				"Namespace": "CWAgent",
+				"MetricName": "mem_used",
+				"Statistic": "Average",
+				"Dimensions": [
+					{
+						"Name": "AutoScalingGroupName",
+						"Value": {
+							"Ref": "EC2AutoScalingGroup"
+						}
+					}
+				]
+			}
+		},
+		"EC2AutoScalingGroup": {
+			"Type": "AWS::AutoScaling::AutoScalingGroup",
+			"Properties": {
+				"DesiredCapacity": 1,
+				"LaunchConfigurationName": {
+					"Ref": "EC2LaunchConfiguration"
+				},
+				"MaxSize": 1,
+				"MinSize": 1,
+				"VPCZoneIdentifier": [
+					{
+						"Ref": "02xSubnet"
+					}
+				]
+			},
+			"UpdatePolicy": {
+				"AutoScalingRollingUpdate": {
+					"MaxBatchSize": 1,
+					"MinInstancesInService": 0,
+					"PauseTime": "PT15M",
+					"SuspendProcesses": [
+						"HealthCheck",
+						"ReplaceUnhealthy",
+						"AZRebalance",
+						"AlarmNotification",
+						"ScheduledActions"
+					],
+					"WaitOnResourceSignals": true
+				}
+			}
+		},
+		"ECSInstanceProfile": {
+			"Type": "AWS::IAM::InstanceProfile",
+			"Properties": {
+				"Path": "/",
+				"Roles": [
+					{
+						"Ref": "EC2Role"
+					}
+				],
+				"InstanceProfileName": {
+					"Fn::Sub": "${AWS::StackName}-IP"
+				}
+			}
+		},
+		"EC2LaunchConfiguration": {
+			"Type": "AWS::AutoScaling::LaunchConfiguration",
+			"Properties": {
+				"IamInstanceProfile": {
+					"Ref": "ECSInstanceProfile"
+				},
+				"ImageId": "ami-045f1b3f87ed83659",
+				"AssociatePublicIpAddress": true,
+				"InstanceType": "t3.nano",
+				"KeyName": {
+					"Ref": "KeyName"
+				},
+				"SecurityGroups": [
+					{
+						"Ref": "VPNSecurityGroup"
+					}
+				],
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": [
+							"\n",
+							[
+								"#!/bin/bash",
+								{
+									"Fn::Sub": "echo ECS_CLUSTER=${ECSVPNCluster} >> /etc/ecs/ecs.config"
+								},
+								"curl -O https://bootstrap.pypa.io/get-pip.py",
+								"sudo python get-pip.py",
+								"sudo /usr/local/bin/pip install awscli --upgrade",
+								{
+									"Fn::Sub": "EIP_ID=${09xEIP}"
+								},
+								"INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)",
+								"/usr/local/bin/aws ec2 associate-address --allocation-id $EIP_ID --instance-id $INSTANCE_ID --allow-reassociation --region=us-east-1",
+								"sudo yum -y update",
+								"sudo yum -y install awslogs",
+								"sudo yum install -y aws-cfn-bootstrap",
+								"sudo yum install -y unzip",
+								"sudo service awslogs start",
+								"curl -O https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip",
+								"unzip AmazonCloudWatchAgent.zip",
+								"sudo ./install.sh",
+								"echo ewoJIm1ldHJpY3MiOiB7CgkJIm1ldHJpY3NfY29sbGVjdGVkIjogewoJCQkiY3B1IjogewoJCQkJInJlc291cmNlcyI6IFsiKiJdLAoJCQkJIm1lYXN1cmVtZW50IjogWyJ1c2FnZV9zeXN0ZW0iLCAidXNhZ2VfdXNlciJdLAoJCQkJInRvdGFsY3B1IjogZmFsc2UKCQkJfSwKCQkJImRpc2siOiB7CgkJCQkicmVzb3VyY2VzIjogWyIqIl0sCgkJCQkibWVhc3VyZW1lbnQiOiBbImZyZWUiLCAidG90YWwiLCAidXNlZCJdCgkJCX0sCgkJCSJwcm9jZXNzZXMiOiB7CgkJCQkibWVhc3VyZW1lbnQiOiBbInJ1bm5pbmciLCAic2xlZXBpbmciLCAiZGVhZCJdCgkJCX0sCgkJCSJtZW0iOiB7CgkJCQkibWVhc3VyZW1lbnQiOiBbInRvdGFsIiwgInVzZWQiLCAiY2FjaGVkIl0KCQkJfQoJCX0sCgkJImFwcGVuZF9kaW1lbnNpb25zIjogewoJCQkiSW1hZ2VJZCI6ICIke2F3czpJbWFnZUlkfSIsCgkJCSJJbnN0YW5jZUlkIjogIiR7YXdzOkluc3RhbmNlSWR9IiwKCQkJIkluc3RhbmNlVHlwZSI6ICIke2F3czpJbnN0YW5jZVR5cGV9IiwKCQkJIkF1dG9TY2FsaW5nR3JvdXBOYW1lIjogIiR7YXdzOkF1dG9TY2FsaW5nR3JvdXBOYW1lfSIKCQl9LAoJCSJhZ2dyZWdhdGlvbl9kaW1lbnNpb25zIiA6IFtbIkF1dG9TY2FsaW5nR3JvdXBOYW1lIl0sIFsiSW5zdGFuY2VJZCIsICJJbnN0YW5jZVR5cGUiXV0KCX0KfQ== | base64 --decode > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
+								"sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s",
+								{
+									"Fn::Sub": "sudo /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource EC2LaunchConfiguration"
+								},
+								{
+									"Fn::Sub": "sudo /opt/aws/bin/cfn-signal -s true --region ${AWS::Region} --stack ${AWS::StackName} --resource EC2AutoScalingGroup"
+								}
+							]
+						]
+					}
+				}
+			},
+			"Metadata": {
+				"AWS::CloudFormation::Init": {
+					"config": {
+						"packages": {
+							"yum": {
+								"awslogs": []
+							}
+						},
+						"files": {
+							"/etc/cfn/cfn-hup.conf": {
+								"mode": "000644",
+								"owner": "root",
+								"group": "root",
+								"content": {
+									"Fn::Join": [
+										"\n",
+										[
+											"[main]",
+											{
+												"Fn::Sub": "stack=${AWS::StackId}"
+											},
+											{
+												"Fn::Sub": "region=${AWS::Region}"
+											}
+										]
+									]
+								}
+							},
+							"/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+								"content": {
+									"Fn::Join": [
+										"\n",
+										[
+											"[cfn-auto-reloader-hook]",
+											"triggers=post.update",
+											"path=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init",
+											{
+												"Fn::Sub": "action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration"
+											}
+										]
+									]
+								}
+							},
+							"/etc/awslogs/awscli.conf": {
+								"content": {
+									"Fn::Join": [
+										"\n",
+										[
+											"[plugins]",
+											"cwlogs = cwlogs",
+											"",
+											"[default]",
+											{
+												"Fn::Sub": "region = ${AWS::Region}"
+											}
+										]
+									]
+								}
+							},
+							"/etc/awslogs/awslogs.conf": {
+								"content": {
+									"Fn::Join": [
+										"\n",
+										[
+											"[general]",
+											"state_file = /var/lib/awslogs/agent-state",
+											"",
+											"[/var/log/dmesg]",
+											"file = /var/log/dmesg",
+											{
+												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/dmesg"
+											},
+											{
+												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
+											},
+											"",
+											"[/var/log/messages]",
+											"file = /var/log/messages",
+											{
+												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/messages"
+											},
+											{
+												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
+											},
+											"datetime_format = %b %d %H:%M:%S",
+											"",
+											"[/var/log/docker]",
+											"file = /var/log/docker",
+											{
+												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/docker"
+											},
+											{
+												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
+											},
+											"datetime_format = %Y-%m-%dT%H:%M:%S.%f",
+											"",
+											"[/var/log/ecs/ecs-init.log]",
+											"file = /var/log/ecs/ecs-init.log.*",
+											{
+												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/ecs/ecs-init.log"
+											},
+											{
+												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
+											},
+											"datetime_format = %Y-%m-%dT%H:%M:%SZ",
+											"",
+											"[/var/log/ecs/ecs-agent.log]",
+											"file = /var/log/ecs/ecs-agent.log.*",
+											{
+												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/ecs/ecs-agent.log"
+											},
+											{
+												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
+											},
+											"datetime_format = %Y-%m-%dT%H:%M:%SZ",
+											"",
+											"[/var/log/ecs/audit.log]",
+											"file = /var/log/ecs/audit.log.*",
+											{
+												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/ecs/audit.log"
+											},
+											{
+												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
+											},
+											"datetime_format = %Y-%m-%dT%H:%M:%SZ"
+										]
+									]
+								}
+							}
+						},
+						"services": {
+							"sysvinit": {
+								"cfn-hup": {
+									"enabled": true,
+									"ensureRunning": true,
+									"files": [
+										"/etc/cfn/cfn-hup.conf",
+										"/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+									]
+								},
+								"awslogs": {
+									"enabled": true,
+									"ensureRunning": true,
+									"files": [
+										"/etc/awslogs/awslogs.conf",
+										"/etc/awslogs/awscli.conf"
+									]
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"VPNSecurityGroup": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"GroupName": {
+					"Ref": "AWS::StackName"
+				},
+				"GroupDescription": "This group allow our ECS VPN to accept incoming connections.",
+				"VpcId": {
+					"Ref": "01xVPC"
+				},
+				"SecurityGroupEgress": [
+					{
+						"IpProtocol": "-1",
+						"FromPort": -1,
+						"ToPort": -1,
+						"CidrIp": "0.0.0.0/0"
+					}
+				],
+				"SecurityGroupIngress": [
+					{
+						"IpProtocol": "tcp",
+						"FromPort": 22,
+						"ToPort": 22,
+						"CidrIp": "0.0.0.0/0"
+					},
+					{
+						"IpProtocol": "udp",
+						"FromPort": 4500,
+						"ToPort": 4500,
+						"CidrIp": "0.0.0.0/0"
+					},
+					{
+						"IpProtocol": "udp",
+						"FromPort": 500,
+						"ToPort": 500,
+						"CidrIp": "0.0.0.0/0"
+					}
+				]
+			}
+		},
+		"EC2ElasticIPPolicy": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "Elastic_IP",
+				"Roles": [
+					{
+						"Ref": "EC2Role"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": "ec2:AssociateAddress",
+							"Resource": "*"
+						}
+					]
+				}
+			}
+		},
+		"EC2Role": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": {
+					"Fn::Sub": "${AWS::StackName}-EC2"
+				},
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "ec2.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+					"arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+				]
+			}
+		}
+	},
+	"Outputs": {
+		"OutputIPSec": {
+			"Value": {
+				"Ref": "06xIPSec"
+			},
+			"Description": "Your IPSec Value."
+		},
+		"OutputPassword": {
+			"Value": {
+				"Ref": "05xPassword"
+			},
+			"Description": "Your VPN Password."
+		},
+		"OutputUsername": {
+			"Value": {
+				"Ref": "04xUsername"
+			},
+			"Description": "Your VPN Username."
+		}
+	}
+}

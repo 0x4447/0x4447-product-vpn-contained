@@ -1,0 +1,7 @@
+{
+	"08xSecondaryDNS": {
+		"Description": "The secondary DNS.",
+		"Type": "String",
+		"Default" : "1.0.0.1"
+	}
+}

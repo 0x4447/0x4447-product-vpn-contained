@@ -1,0 +1,7 @@
+{
+	"04xUsername": {
+		"Description": "The user name for your VPN.",
+		"Type": "String",
+		"MinLength": 3
+	}
+}

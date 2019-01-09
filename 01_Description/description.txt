@@ -1,0 +1,1 @@
+This stack deploys a containerized VPN server for one user.

@@ -1,0 +1,26 @@
+{
+	"RAMAlarm": {
+		"Type": "AWS::CloudWatch::Alarm",
+		"Properties": {
+			"AlarmName": { "Fn::Sub": "${AWS::StackName}-RAM" },
+			"AlarmDescription": "Track RAM utilization across all the EC2",
+			"TreatMissingData": "notBreaching",
+			"ActionsEnabled": true,
+			"AlarmActions": [ { "Ref": "SNSTopic" } ],
+			"ComparisonOperator": "GreaterThanOrEqualToThreshold",
+			"EvaluationPeriods": 1,
+			"Unit": "Count",
+			"Period": 300,
+			"Threshold": 400000000,
+			"Namespace": "CWAgent",
+			"MetricName": "mem_used",
+			"Statistic": "Average",
+			"Dimensions": [
+				{
+					"Name": "AutoScalingGroupName",
+					"Value": { "Ref": "EC2AutoScalingGroup" }
+				}
+			]
+		}
+	}
+}

@@ -1,0 +1,10 @@
+{
+	"ECSInstanceProfile": {
+		"Type": "AWS::IAM::InstanceProfile",
+		"Properties": {
+			"Path": "/",
+			"Roles": [ { "Ref": "EC2Role" } ],
+			"InstanceProfileName": { "Fn::Sub": "${AWS::StackName}-IP" }
+		}
+	}
+}

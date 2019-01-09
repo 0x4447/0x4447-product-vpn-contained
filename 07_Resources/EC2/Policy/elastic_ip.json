@@ -1,0 +1,21 @@
+{
+	"EC2ElasticIPPolicy": {
+		"Type" : "AWS::IAM::Policy",
+		"Properties" : {
+			"PolicyName": "Elastic_IP",
+			"Roles" : [
+				{ "Ref": "EC2Role" }
+			],
+			"PolicyDocument" : {
+				"Version": "2012-10-17",
+				"Statement": [
+					{
+						"Effect": "Allow",
+						"Action": "ec2:AssociateAddress",
+						"Resource": "*"
+					}
+				]
+			}
+		}
+	}
+}

@@ -1,0 +1,11 @@
+{
+	"ECSVPNService": {
+		"Type": "AWS::ECS::Service",
+		"Properties": {
+			"Cluster": { "Ref": "ECSVPNCluster" },
+			"LaunchType": "EC2",
+			"SchedulingStrategy": "DAEMON",
+			"TaskDefinition": { "Ref": "ECSVPNTask" }
+		}
+	}
+}

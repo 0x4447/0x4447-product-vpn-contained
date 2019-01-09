@@ -1,0 +1,26 @@
+{
+	"CPUAlarm": {
+		"Type": "AWS::CloudWatch::Alarm",
+		"Properties": {
+			"AlarmName": { "Fn::Sub": "${AWS::StackName}-CPU" },
+			"AlarmDescription": "Track CPU utilization across all the EC2",
+			"TreatMissingData": "notBreaching",
+			"ActionsEnabled": true,
+			"AlarmActions": [ { "Ref": "SNSTopic" } ],
+			"ComparisonOperator": "GreaterThanOrEqualToThreshold",
+			"EvaluationPeriods": 1,
+			"Unit": "Count",
+			"Period": 300,
+			"Threshold": 75,
+			"Namespace": "AWS/EC2",
+			"MetricName": "CPUUtilization",
+			"Statistic": "Average",
+			"Dimensions": [
+				{
+					"Name": "AutoScalingGroupName",
+					"Value": { "Ref": "EC2AutoScalingGroup" }
+				}
+			]
+		}
+	}
+}
