@@ -12,7 +12,7 @@ When you deploy this stack not everything is going be done for you. One missing 
 
 # What will be deployed
 
-![0x4447 VPN Stack](https://raw.githubusercontent.com/0x4447/0x4447-Products/assets/stack.png)
+![0x4447 VPN Stack](https://raw.githubusercontent.com/0x4447/0x4447-products-vpn-contained/assets/stack.png)
 
 The picture above shows the Stack that will be deployed and bellow you can see a detailed list of all the resources that will be created for you.
 
