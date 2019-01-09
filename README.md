@@ -56,14 +56,6 @@ The best way to take advantage of this Stack is to have a unique AWS Account jus
 - Easier to limit access to this AWS VPN account.
 - More precise access to resources thanks to VPC Peering.
 
-# Monitoring
-
-The deployed stack will have a detailed CloudWatch Dashboard where you'll have a detail insight in what is happening with your VPN. you'll have a widget displaying Network traffic and CPU load from the EC2 instance.
-
-## Alerts
-
-To make it easier for you to sleep well, we have CloudWatch Alert which makes sure that if the CPU or RAM of the EC2 instance goes above a certain threshold you'll receive an email from AWS telling you about this fact, so you can then take appropriate actions.
-
 # Pricing
 
 This stack will generate expenses only by two resources (if deployed in a separated AWS Account):
@@ -87,6 +79,8 @@ The network traffic price it depends on how much you use it. But this is an exam
 # Monitoring
 
 ## Dashboard
+
+![0x4447 VPN Stack Dashboard](https://raw.githubusercontent.com/0x4447/0x4447-products-vpn-contained/assets/dashboard.png)
 
 The deployed stack will have a detailed CloudWatch Dashboard where you'll have a detail insight in what is happening with your VPN. you'll have a widget displaying Network traffic and CPU load from the EC2 instance.
 
