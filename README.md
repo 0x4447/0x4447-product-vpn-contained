@@ -82,7 +82,7 @@ The network traffic price it depends on how much you use it. But this is an exam
 
 ![0x4447 VPN Stack Dashboard](https://raw.githubusercontent.com/0x4447/0x4447-products-vpn-contained/assets/dashboard.png)
 
-The deployed stack will have a detailed CloudWatch Dashboard where you'll have a detail insight in what is happening with your VPN. you'll have a widget displaying Network traffic and CPU load from the EC2 instance.
+The deployed stack will have a detailed CloudWatch Dashboard where you'll have a detail insight in what is happening with your VPN. you'll have a widget displaying Network traffic, CPU time from EC2 instance and ECS, plus a bunch more.
 
 ## Alerts
 
