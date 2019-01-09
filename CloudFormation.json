@@ -2,15 +2,15 @@
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Description": "This stack deploys a containerized VPN server for one user.",
 	"Parameters": {
-		"02xSubnet": {
-			"Description": "Select the subnet where to deploy the VPN.",
-			"ConstraintDescription": "must be the name of an existing subnet",
-			"Type": "AWS::EC2::Subnet::Id"
-		},
 		"01xVPC": {
 			"Description": "Select the VPC where to deploy the VPN.",
 			"ConstraintDescription": "must be the name of an existing subnet",
 			"Type": "AWS::EC2::VPC::Id"
+		},
+		"02xSubnet": {
+			"Description": "Select the subnet where to deploy the VPN.",
+			"ConstraintDescription": "must be the name of an existing subnet",
+			"Type": "AWS::EC2::Subnet::Id"
 		},
 		"04xUsername": {
 			"Description": "The user name for your VPN.",
@@ -74,162 +74,6 @@
 				}
 			}
 		},
-		"ECSVPNCluster": {
-			"Type": "AWS::ECS::Cluster",
-			"Properties": {
-				"ClusterName": {
-					"Ref": "AWS::StackName"
-				}
-			}
-		},
-		"ECSVPNService": {
-			"Type": "AWS::ECS::Service",
-			"Properties": {
-				"Cluster": {
-					"Ref": "ECSVPNCluster"
-				},
-				"LaunchType": "EC2",
-				"SchedulingStrategy": "DAEMON",
-				"TaskDefinition": {
-					"Ref": "ECSVPNTask"
-				}
-			}
-		},
-		"ECSVPNTask": {
-			"Type": "AWS::ECS::TaskDefinition",
-			"Properties": {
-				"Family": {
-					"Ref": "AWS::StackName"
-				},
-				"Volumes": [
-					{
-						"Name": "modules",
-						"Host": {
-							"SourcePath": "/lib/modules"
-						}
-					}
-				],
-				"ExecutionRoleArn": {
-					"Ref": "ECSVPNTaskExecutionRole"
-				},
-				"TaskRoleArn": {
-					"Ref": "ECSVPNTaskTaskRole"
-				},
-				"Memory": "256",
-				"RequiresCompatibilities": [
-					"EC2"
-				],
-				"NetworkMode": "bridge",
-				"ContainerDefinitions": [
-					{
-						"Environment": [
-							{
-								"Name": "VPN_USER",
-								"Value": {
-									"Ref": "04xUsername"
-								}
-							},
-							{
-								"Name": "VPN_PASSWORD",
-								"Value": {
-									"Ref": "05xPassword"
-								}
-							},
-							{
-								"Name": "VPN_IPSEC_PSK",
-								"Value": {
-									"Ref": "06xIPSec"
-								}
-							},
-							{
-								"Name": "VPN_DNS_SRV1",
-								"Value": {
-									"Ref": "07xPrimaryDNS"
-								}
-							},
-							{
-								"Name": "VPN_DNS_SRV2",
-								"Value": {
-									"Ref": "08xSecondaryDNS"
-								}
-							}
-						],
-						"Image": "hwdsl2/ipsec-vpn-server",
-						"Memory": 128,
-						"MountPoints": [
-							{
-								"ReadOnly": true,
-								"ContainerPath": "/lib/modules",
-								"SourceVolume": "modules"
-							}
-						],
-						"Name": "VPN",
-						"PortMappings": [
-							{
-								"HostPort": 4500,
-								"Protocol": "udp",
-								"ContainerPort": 4500
-							},
-							{
-								"HostPort": 500,
-								"Protocol": "udp",
-								"ContainerPort": 500
-							}
-						],
-						"Privileged": true,
-						"ReadonlyRootFilesystem": false
-					}
-				]
-			}
-		},
-		"ECSVPNTaskExecutionRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": {
-					"Fn::Sub": "${AWS::StackName}-ECS-Execution"
-				},
-				"AssumeRolePolicyDocument": {
-					"Version": "2008-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "ecs-tasks.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				},
-				"ManagedPolicyArns": [
-					"arn:aws:iam::aws:policy/CloudWatchFullAccess",
-					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-				]
-			}
-		},
-		"ECSVPNTaskTaskRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": {
-					"Fn::Sub": "${AWS::StackName}-ECS-Task"
-				},
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "ecs-tasks.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				},
-				"ManagedPolicyArns": [
-					"arn:aws:iam::aws:policy/CloudWatchFullAccess",
-					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-				]
-			}
-		},
 		"CloudWatchDashboard": {
 			"Type": "AWS::CloudWatch::Dashboard",
 			"Properties": {
@@ -238,10 +82,13 @@
 				},
 				"DashboardBody": {
 					"Fn::Sub": [
-						"{\r\n    \"widgets\": [\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 9,\r\n            \"y\": 0,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\" ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Network In & Out\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 3,\r\n            \"width\": 24,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"CPUUtilization\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\" ],\r\n                    [ \".\", \"CPUCreditUsage\", \".\", \".\", { \"yAxis\": \"right\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"CPU & Credit Usage\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 0,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"id\": \"m1\", \"stat\": \"Sum\" } ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\", \"id\": \"m2\", \"stat\": \"Sum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Total In & Out\",\r\n                \"period\": 300\r\n            }\r\n        }\r\n    ]\r\n}",
+						"{\r\n    \"widgets\": [\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 9,\r\n            \"y\": 0,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\" ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Network In & Out\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 3,\r\n            \"width\": 24,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"CPUUtilization\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\" ],\r\n                    [ \".\", \"CPUCreditUsage\", \".\", \".\", { \"yAxis\": \"right\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"EC2 CPU Time & Credit Usage\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 0,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"id\": \"m1\", \"stat\": \"Sum\", \"period\": 2592000 } ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\", \"id\": \"m2\", \"stat\": \"Sum\", \"period\": 2592000 } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Total traffic\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 15,\r\n            \"y\": 9,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"mem_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\" } ],\r\n                    [ \".\", \"mem_used\", \".\", \".\", { \"color\": \"#2ca02c\" } ],\r\n                    [ \".\", \"mem_cached\", \".\", \".\", { \"color\": \"#8c564b\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"RAM\"\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 9,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"mem_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"mem_used\", \".\", \".\", { \"color\": \"#2ca02c\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"mem_cached\", \".\", \".\", { \"color\": \"#8c564b\", \"period\": 2592000, \"stat\": \"Maximum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"RAM\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 15,\r\n            \"y\": 12,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"processes_running\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#2ca02c\" } ],\r\n                    [ \".\", \"processes_sleeping\", \".\", \".\" ],\r\n                    [ \".\", \"processes_dead\", \".\", \".\", { \"color\": \"#8c564b\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Processes\"\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 12,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"processes_running\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#2ca02c\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"processes_sleeping\", \".\", \".\", { \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"processes_dead\", \".\", \".\", { \"color\": \"#8c564b\", \"period\": 2592000, \"stat\": \"Maximum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Processes\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 15,\r\n            \"y\": 15,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"disk_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\" } ],\r\n                    [ \".\", \"disk_used\", \".\", \".\", { \"color\": \"#1f77b4\" } ],\r\n                    [ \".\", \"disk_free\", \".\", \".\" ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"HDD\"\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 15,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"disk_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"disk_used\", \".\", \".\", { \"color\": \"#1f77b4\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"disk_free\", \".\", \".\", { \"period\": 2592000, \"stat\": \"Maximum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"HDD\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 3,\r\n            \"y\": 6,\r\n            \"width\": 21,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/ECS\", \"CPUUtilization\", \"ClusterName\", \"${ClusterName}\", { \"stat\": \"Maximum\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"ECS CPU Time\"\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 6,\r\n            \"width\": 3,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/ECS\", \"CPUUtilization\", \"ClusterName\", \"${ClusterName}\", { \"stat\": \"Average\", \"period\": 2592000 } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Average\",\r\n                \"period\": 300\r\n            }\r\n        }\r\n    ]\r\n}",
 						{
 							"AutoScalingGroupName": {
 								"Ref": "EC2AutoScalingGroup"
+							},
+							"ClusterName": {
+								"Ref": "AWS::StackName"
 							}
 						}
 					]
@@ -649,6 +496,162 @@
 					"arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
 					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
 					"arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+				]
+			}
+		},
+		"ECSVPNCluster": {
+			"Type": "AWS::ECS::Cluster",
+			"Properties": {
+				"ClusterName": {
+					"Ref": "AWS::StackName"
+				}
+			}
+		},
+		"ECSVPNService": {
+			"Type": "AWS::ECS::Service",
+			"Properties": {
+				"Cluster": {
+					"Ref": "ECSVPNCluster"
+				},
+				"LaunchType": "EC2",
+				"SchedulingStrategy": "DAEMON",
+				"TaskDefinition": {
+					"Ref": "ECSVPNTask"
+				}
+			}
+		},
+		"ECSVPNTask": {
+			"Type": "AWS::ECS::TaskDefinition",
+			"Properties": {
+				"Family": {
+					"Ref": "AWS::StackName"
+				},
+				"Volumes": [
+					{
+						"Name": "modules",
+						"Host": {
+							"SourcePath": "/lib/modules"
+						}
+					}
+				],
+				"ExecutionRoleArn": {
+					"Ref": "ECSVPNTaskExecutionRole"
+				},
+				"TaskRoleArn": {
+					"Ref": "ECSVPNTaskTaskRole"
+				},
+				"Memory": "256",
+				"RequiresCompatibilities": [
+					"EC2"
+				],
+				"NetworkMode": "bridge",
+				"ContainerDefinitions": [
+					{
+						"Environment": [
+							{
+								"Name": "VPN_USER",
+								"Value": {
+									"Ref": "04xUsername"
+								}
+							},
+							{
+								"Name": "VPN_PASSWORD",
+								"Value": {
+									"Ref": "05xPassword"
+								}
+							},
+							{
+								"Name": "VPN_IPSEC_PSK",
+								"Value": {
+									"Ref": "06xIPSec"
+								}
+							},
+							{
+								"Name": "VPN_DNS_SRV1",
+								"Value": {
+									"Ref": "07xPrimaryDNS"
+								}
+							},
+							{
+								"Name": "VPN_DNS_SRV2",
+								"Value": {
+									"Ref": "08xSecondaryDNS"
+								}
+							}
+						],
+						"Image": "hwdsl2/ipsec-vpn-server",
+						"Memory": 128,
+						"MountPoints": [
+							{
+								"ReadOnly": true,
+								"ContainerPath": "/lib/modules",
+								"SourceVolume": "modules"
+							}
+						],
+						"Name": "VPN",
+						"PortMappings": [
+							{
+								"HostPort": 4500,
+								"Protocol": "udp",
+								"ContainerPort": 4500
+							},
+							{
+								"HostPort": 500,
+								"Protocol": "udp",
+								"ContainerPort": 500
+							}
+						],
+						"Privileged": true,
+						"ReadonlyRootFilesystem": false
+					}
+				]
+			}
+		},
+		"ECSVPNTaskExecutionRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": {
+					"Fn::Sub": "${AWS::StackName}-ECS-Execution"
+				},
+				"AssumeRolePolicyDocument": {
+					"Version": "2008-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "ecs-tasks.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/CloudWatchFullAccess",
+					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+				]
+			}
+		},
+		"ECSVPNTaskTaskRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": {
+					"Fn::Sub": "${AWS::StackName}-ECS-Task"
+				},
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "ecs-tasks.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/CloudWatchFullAccess",
+					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 				]
 			}
 		}
