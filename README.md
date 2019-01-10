@@ -58,10 +58,11 @@ The best way to take advantage of this Stack is to have a unique AWS Account jus
 
 # Pricing
 
-This stack will generate expenses only by two resources (if deployed in a separated AWS Account):
+This stack will generate expenses by three resources (if deployed in a separated AWS Account):
 
 - EC2
 - Network traffic
+- CloudWatch Alarms
 
 Additional charges my apply if not deployed in a unique AWS Account:
 
