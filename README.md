@@ -77,6 +77,10 @@ Since we are using a t3.nano type server, the monthly price should be around $0.
 
 The network traffic price it depends on how much you use it. But this is an example to give an idea of what to expect. If you were to transfer 100GB of data from the EC2 instance to the Internet, then you'd pay 100GB * $0.09/GB = $9.
 
+## Alarms
+
+Each alarm in your account will cost you $0.10 per alarm.
+
 # Monitoring
 
 To help you get a clear insight in your resources we build out a detailed dashboard that will show graphically exactly what is happening in your EC2 Instance and Container. While also setting alarms to let you know when key aspect of the deployment are acting out, and the EC2 will also push logs to CloudWatch to give you a detailed view of the Instance insides.
