@@ -78,13 +78,13 @@ The network traffic price it depends on how much you use it. But this is an exam
 
 # Monitoring
 
-To help you get an clear insight in your resources we build out a detailed dashboard that will show exactly what is happening in your EC2 Instance and Container.
+To help you get a clear insight in your resources we build out a detailed dashboard that will show graphically exactly what is happening in your EC2 Instance and Container. While also setting alarms to let you know when key aspect of the deployment are acting out, and the EC2 will also push logs to CloudWatch to give you a detailed view of the Instance insides.
 
 ## Dashboard
 
 ![0x4447 VPN Stack Dashboard](https://raw.githubusercontent.com/0x4447/0x4447-products-vpn-contained/assets/dashboard.png)
 
-The deployed stack will have a detailed CloudWatch Dashboard where you'll have a detail insight in what is happening with your VPN. you'll have a widget displaying Network traffic, CPU time from EC2 instance and ECS, plus a bunch more.
+As you can see from the image above you get a clear view of what is going on with your resources. We recommend using the full screen feature which will update the widget as new data comes along.
 
 ## Alerts
 
@@ -92,7 +92,7 @@ To make it easier for you to sleep well, we have two CloudWatch Alert which make
 
 ## Logs
 
-We also send logs to CloudWatch to make it easy to see exactly what is going on inside the EC2 Instance without need to log in to the machine itself. We exposed the following logs:
+We also send logs to CloudWatch to make it easy to see exactly what is going on inside the EC2 Instance without the need to log in to the machine itself. We exposed the following logs:
 
 - dmesg
 - docker
