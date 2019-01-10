@@ -78,6 +78,8 @@ The network traffic price it depends on how much you use it. But this is an exam
 
 # Monitoring
 
+To help you get an clear insight in your resources we build out a detailed dashboard that will show exactly what is happening in your EC2 Instance and Container.
+
 ## Dashboard
 
 ![0x4447 VPN Stack Dashboard](https://raw.githubusercontent.com/0x4447/0x4447-products-vpn-contained/assets/dashboard.png)
@@ -87,6 +89,15 @@ The deployed stack will have a detailed CloudWatch Dashboard where you'll have a
 ## Alerts
 
 To make it easier for you to sleep well, we have two CloudWatch Alert which makes sure that if the CPU or RAM of the EC2 instance goes above a certain threshold you'll receive an email from AWS telling you about this fact, so you can then take appropriate actions.
+
+## Logs
+
+We also send logs to CloudWatch to make it easy to see exactly what is going on inside the EC2 Instance without need to log in to the machine itself. We exposed the following logs:
+
+- dmesg
+- docker
+- ecs-agent.log
+- messages
 
 # How to work with this project
 
