@@ -87,7 +87,7 @@ The network traffic price it depends on how much you use it. But this is an exam
 
 ## Alarms
 
-Each alarm in your account will cost you $0.10 per alarm. Check the [AWS pricing page](https://aws.amazon.com/cloudwatch/pricing/) to make sure this calculation is still valid
+Each alarm in your account will cost you $0.10 per alarm. Check the [AWS pricing page](https://aws.amazon.com/cloudwatch/pricing/) to make sure this calculation is still valid.
 
 # Monitoring
 
