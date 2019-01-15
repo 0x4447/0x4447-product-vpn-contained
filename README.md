@@ -1,28 +1,28 @@
 # 0x4447 Contained VPN
 
-This folder contains a CloudFormation file that when deployed, will create a L2TP IPSec and a CISCO IPSec VPN server in your selected AWS account. 
+This folder contains a CloudFormation file that, when deployed, will create L2TP, IPSec, and CISCO IPSec VPN servers in your selected AWS account. 
 
-# DISCLAMER!
+# DISCLAIMER!
 
-This stack is avaiable for free to anyone as is, and we are not responsabile for any damage of any kind that my happen by using this stack. You take full responsability when using it.
+This stack is available to anyone at no cost, but on an as-is basis. 0x4447 is not responsible for damage of any kind that occurs when this stack is used. You take full responsibility when you use it.
 
 # Use cases
 
-This stack is ideal when you want to connect your office to AWS resources and have them avaiable in your local office nettwork, or to secure your internet connection.
+This stack is ideal for connecting your office to AWS resources and making those resources available to your local office network, as well as securing your internet connection.
 
 # Before you deploy
 
-When you deploy this stack not everything is going be done for you. One missing aspect is the Elastic IP part, it can't be create by the CF file itself. You'll have to request a fixed IP and take note of the ID, which you'll use while deploying the CloudFormation file. In the following section there is a more details explanation why an Elastic IP is important and how it is used.
+Don't expect this stack to do everything for you. For example, the CF file itself can't create the Elastic IP part, you'll need to request a fixed IP and take note of the ID, which is used when deploying the CloudFormation file. The next section contains details on why an Elastic IP is important and how it's used.
 
 # How to deploy
 
 WORK IN PROGRESS.
 
-# What will be deployed
+# What deploys
 
 ![0x4447 VPN Stack](https://raw.githubusercontent.com/0x4447/0x4447-products-vpn-contained/assets/stack.png)
 
-The picture above shows the Stack that will be deployed and bellow you can see a detailed list of all the resources that will be created for you.
+The image above shows the stack that deploys. You'll find a detailed list of all resources the stack creates for you below.
 
 - 1x ECS
   - 1x Cluster
@@ -38,48 +38,48 @@ The picture above shows the Stack that will be deployed and bellow you can see a
   - EC2 CPU
   - EC2 RAM
 
-# How dose it work
+# How it works
 
-The VPN servers is created using the [hwdsl2/ipsec-vpn-server](https://github.com/hwdsl2/docker-ipsec-vpn-server) project, a Docker container that contains all the necessary services to create a VPN solution. The Docker container will be deployed using ECS on to a EC2 instance created thanks to the Launch Configuration and the Auto Scaling Group. The benefit of this solution are multi folds:
+The VPN servers are created using the [hwdsl2/ipsec-vpn-server](https://github.com/hwdsl2/docker-ipsec-vpn-server) project, which is a Docker container with all the services needed to create a VPN solution. The Docker container is deployed using ECS onto an EC2 instance created thanks to the Launch Configuration and the Auto Scaling Group. This solution provides multifold benefits:
 
-- If the docker Container crashes at some point, it will be automatically restarted by ECS.
-- If the EC2 server for whatever reason gets terminated, a new instacne will take its place.
+- If the Docker container crashes at some point, ECS automatically restarts it.
+- If the EC2 server is terminated for whatever reason, a new instance takes its place.
 
-Another benefit of this is that you can on purpose terminate the EC2 Instance if you realize that the network performance is deteriorating. This can happen since you are on a shared environment and if another instance is running on the same machine as yours and takes more resources then average, you might get a worse performance. If this happens, terminate the instance, wait around 2 min, and hopefully the new EC2 Instance will be created on a different machine with less load.
+Additional benefit: You can purposely terminate the EC2 Instance if you notice that network performance is deteriorating, which can happen when working in a shared environment. If your machine is running another instance that uses more resources than average, it may adversely affect performance. If this happens, terminate the instance and then wait around two minutes. Hopefully, the new EC2 Instance will be created on a different machine with less load.
 
-This way you get a very resilient solution that is hard to brake, and since all the unique settings are stored in the ENVIRONMENT variables, your credentials always stay the same. Same goes for your public Elastic IP.
+This gives you a very resilient solution that's hard to break, and with all unique settings stored in the ENVIRONMENT variables, your credentials always stay the same. The same goes for your public Elastic IP.
 
 # Elastic IP magic
 
-Another important aspect of this Stack is that it requires an Elastic IP to work. This is important to preserve continuity. The EC2 instance will automatically attach the provided Elastic IP at boot time, meaning even if the EC2 has to be recreated because of an issue, it will always have the same IP, meaning whoever is going to use your VPN will see only a few minutes of down time, and then everything will be back to where it was. Non need to update the DNS settings with a new public IP.
+Another important aspect of this stack is that it requires an Elastic IP to work. This is important for preserving continuity. The EC2 instance automatically attaches the provided Elastic IP at boot time, meaning even if the EC2 has to be recreated because there's an issue, it will always have the same IP. This means that anyone using your VPN will see only a few minutes of downtime, and then everything will be restored. There's no need to update the DNS settings with a new public IP.
 
-As you can see, once this stack is deployed it will do everything that is possible to have all the moving parts always available.
+As you can see, once this stack is deployed, it does everything possible to ensure that all moving parts are always available.
 
 # Best practice
 
-The best way to take advantage of this Stack is to have a unique AWS Account just for it. This should be done using the AWS Organization feature. The benefit to do so are:
+The best way to take advantage of these benefits is to have a unique AWS Account for this stack alone. This should be done via the AWS Organization feature, which offers the following advantages:
 
-- One free Elastic IP per AWS account.
-- Tree CloudWatch Dashboard for free per account.
-- Easier to limit access to this AWS VPN account.
-- More precise access to resources thanks to VPC Peering.
+- One free Elastic IP per AWS account
+- Free Tree CloudWatch Dashboard for each account
+- Easily limited access to this AWS VPN account
+- More precise access to resources through VPC Peering
 
 # Pricing
 
-This stack will generate expenses by three resources (if deployed in a separated AWS Account):
+This stack generates expenses via three resources (if deployed in a dedicated AWS Account):
 
 - EC2
 - Network traffic
 - CloudWatch Alarms
 
-Additional charges my apply if not deployed in a unique AWS Account:
+Additional charges may apply if it isn't deployed via a unique AWS Account:
 
 - Elastic IP
 - CloudWatch Dashboard
 
 ## CPU Load
 
-Since we are using a t3.nano type server, the monthly price should be around $0.0052/h * 24/h * 30/d = $3.744 a month. Check the [AWS pricing page](https://aws.amazon.com/ec2/pricing/on-demand/) to make sure this calculation is still valid. Also, since we are using a T3 type instance you might be charged for Burst mode if the CPU time will go above the average. In general the VPN generates very little CPU load, but since we are running a complex operating system, if any process gets stuck in an endless loop or, the server will be some how compromised – the CPU load could go way up - be aware of this.
+Since we're using a t3.nano type server, the monthly price should be around $0.0052/h * 24/h * 30/d = $3.744 a month. Check the [AWS pricing page](https://aws.amazon.com/ec2/pricing/on-demand/) to make sure this calculation is still valid. Also, since we are using a T3 type instance you might be charged for Burst mode if the CPU time will go above the average. In general the VPN generates very little CPU load, but since we are running a complex operating system, if any process gets stuck in an endless loop or, the server will be some how compromised – the CPU load could go way up - be aware of this.
 
 ## Network
 
