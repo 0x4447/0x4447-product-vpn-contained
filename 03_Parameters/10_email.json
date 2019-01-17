@@ -1,0 +1,6 @@
+{
+	"Email" : {
+		"Description": "Provide an email to which to send errors from alarms",
+		"Type": "String"
+	}
+}

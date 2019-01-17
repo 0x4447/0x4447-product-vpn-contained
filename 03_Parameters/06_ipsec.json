@@ -1,6 +1,6 @@
 {
 	"06xIPSec": {
-		"Description": "A random string IPSec PSK string.",
+		"Description": "A random IPSec PSK string.",
 		"Type": "String",
 		"NoEcho": true,
 		"MinLength": 10

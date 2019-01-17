@@ -1,6 +1,6 @@
 {
 	"02xSubnet": {
-		"Description": "Select the subnet where to deploy the VPN.",
+		"Description": "Select the subnet to which to deploy the VPN.",
 		"ConstraintDescription": "must be the name of an existing subnet",
 		"Type": "AWS::EC2::Subnet::Id"
 	}
