@@ -4,7 +4,7 @@ This folder contains a CloudFormation file that, when deployed, will create L2TP
 
 # DISCLAIMER!
 
-This stack is available to anyone at no cost, but on an as-is basis. 0x4447 is not responsible for damage of any kind that may occur when this stack is used. You take full responsibility when you use it.
+This stack is available to anyone at no cost, but on an as-is basis. 0x4447 LLC is not responsible for damages or costs of any kind that may occur when this stack is used. You take full responsibility when you use it.
 
 # Use cases
 
