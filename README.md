@@ -1,14 +1,12 @@
 # 0x4447 Contained VPN
 
-This folder contains a CloudFormation file that, when deployed, will create L2TP, IPSec, and CISCO IPSec VPN servers in your selected AWS account. 
+This folder contains a CloudFormation file that, when deployed, will create L2TP, IPSec, and CISCO IPSec VPN servers in your selected AWS account.
+
+The stack is ideal for connecting your office to AWS resources and making those resources available to your local office network, as well as securing your Internet connection.
 
 # DISCLAIMER!
 
 This stack is available to anyone at no cost, but on an as-is basis. 0x4447 LLC is not responsible for damages or costs of any kind that may occur when this stack is used. You take full responsibility when you use it.
-
-# Use cases
-
-This stack is ideal for connecting your office to AWS resources and making those resources available to your local office network, as well as securing your internet connection.
 
 # Before you deploy
 
