@@ -115,7 +115,7 @@ We also send logs to CloudWatch to make it easy to see exactly what is going on 
 
 # How to work with this project
 
-When you want to deploy the stack, the only file you should be interested in is the `CloudFormation.json` file. If you'd like to modify the stack, we recommend that you use the [Grapes framework](https://github.com/0x4447/0x4447-cli-node-grapes), which was designed to make it easier to work with CloudFormation file. You should never edit the main CF file if you want to keep your sanity 🤪.
+When you want to deploy the stack, the only file you should be interested in is the `CloudFormation.json` file. If you'd like to modify the stack, we recommend that you use the [Grapes framework](https://github.com/0x4447/0x4447-cli-node-grapes), which was designed to make it easier to work with the CloudFormation file. You should never edit the main CF file if you want to keep your sanity 🤪.
 
 # The End
 
