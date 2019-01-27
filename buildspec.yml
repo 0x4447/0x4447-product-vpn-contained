@@ -9,4 +9,4 @@ phases:
       - grapes -b -s ./Stack_VPN_Contained
   post_build:
     finally:
-      - aws s3 cp ./Stack_VPN_Contained/CloudFormation.json s3://0x4447-drive-cloudformation/vpn-contained.json --acl public-read --acl bucket-owner-full-control
+      - aws s3 cp ./Stack_VPN_Contained/CloudFormation.json s3://0x4447-drive-cloudformation/vpn-contained.json --acl public-read
