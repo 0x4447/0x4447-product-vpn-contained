@@ -1,33 +1,32 @@
 {
 	"AWSTemplateFormatVersion": "2010-09-09",
-	"Description": "Automatically deploy code on new commits.",
+	"Description": "This stack auto deploys the S3-Email solution.",
 	"Parameters": {
 		"CPName": {
-			"Description": "Give your CodeBuild a unique name.",
+			"Description": "Give the CodePipeline a unique name.",
 			"Type": "String"
 		},
 		"GitHubOwner": {
-			"Description": "Past the URL to the repo that you want to monitor.",
+			"Description": "Write the name of the owner of the repository. Either the Org name or the user name.",
 			"Type": "String"
 		},
 		"GitHubRepoName": {
-			"Description": "Past the URL to the repo that you want to monitor.",
+			"Description": "Write the repository name, as it's seen on GitHub.",
 			"Type": "String"
 		},
 		"GitHubToken": {
-			"Description": "You need to create a Personal access tokens (https://github.com/settings/tokens) for CodePipeline to have access to the GitHub repo despite it being public.",
+			"Description": "Write the Personal access tokens (can be created under this URL: https://github.com/settings/tokens) for CodePipeline to have access to the GitHub repository, even if it is public.",
 			"Type": "String"
 		},
 		"CodePipelineArtifact": {
-			"Description": "The S3 bucket name where CodePipeline will store the artifacts (this is needed only by CP to work, and pass task results to the next stage).",
+			"Description": "The S3 bucket name where CodePipeline will store the artifacts.",
 			"Type": "String"
 		},
 		"Stage": {
-			"Description": "Select what Stage are you deploying.",
+			"Description": "Select what Stage needs to be deployed.",
 			"Type": "String",
 			"AllowedValues": [
 				"master",
-				"staging",
 				"development"
 			],
 			"Default": "master",
