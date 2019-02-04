@@ -72,6 +72,7 @@ This stack generates expenses via three resources (if deployed in a dedicated AW
 - EC2
 - Network traffic
 - CloudWatch Alarms
+- CloudWatch Logs
 
 Additional charges may apply if it isn't deployed via a unique AWS Account:
 
@@ -93,6 +94,8 @@ The alarms in your account will cost ten cents apiece, and we create two of them
 # Monitoring
 
 To provide you with a clear insight into the resources that are available to you, we built a detailed dashboard that graphically shows exactly what's happening in your EC2 instance and container. In addition, it will set alarms to let you know when key aspects of the deployment are acting out, and the EC2 will push logs to CloudWatch to give you a detailed view of the instance's insides without the need for SSH inside the machine.
+
+Depending on how much data is pushed from the EC2 to CloudWatch you might pay around ~$18 per month.
 
 ## Dashboard
 
