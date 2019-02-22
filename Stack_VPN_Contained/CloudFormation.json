@@ -2,13 +2,24 @@
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Description": "This stack deploys a containerized VPN server for one user.",
 	"Parameters": {
+		"09xEIP": {
+			"Description": "Type the elastic IP ID that you'd like to associate to the EC2 instance.",
+			"Type": "String"
+		},
 		"Email": {
 			"Description": "Provide an email to which to send errors from alarms",
 			"Type": "String"
 		},
-		"09xEIP": {
-			"Description": "Type the elastic IP ID that you'd like to associate to the EC2 instance.",
-			"Type": "String"
+		"KeyName": {
+			"Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+			"Type": "AWS::EC2::KeyPair::KeyName",
+			"ConstraintDescription": "Can contain only ASCII characters."
+		},
+		"06xIPSec": {
+			"Description": "A random IPSec PSK string.",
+			"Type": "String",
+			"NoEcho": true,
+			"MinLength": 10
 		},
 		"05xPassword": {
 			"Description": "The password for your VPN.",
@@ -16,20 +27,15 @@
 			"NoEcho": true,
 			"MinLength": 10
 		},
-		"KeyName": {
-			"Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
-			"Type": "AWS::EC2::KeyPair::KeyName",
-			"ConstraintDescription": "Can contain only ASCII characters."
+		"PasswordAdditional": {
+			"Description": "passwords must be separated by spaces.",
+			"Type": "String",
+			"NoEcho": true
 		},
 		"07xPrimaryDNS": {
 			"Description": "The primary DNS.",
 			"Type": "String",
 			"Default": "1.1.1.1"
-		},
-		"PasswordAdditional": {
-			"Description": "passwords must be separated by spaces.",
-			"Type": "String",
-			"NoEcho": true
 		},
 		"08xSecondaryDNS": {
 			"Description": "The secondary DNS.",
@@ -40,12 +46,6 @@
 			"Description": "Select the subnet to which to deploy the VPN.",
 			"ConstraintDescription": "must be the name of an existing subnet",
 			"Type": "AWS::EC2::Subnet::Id"
-		},
-		"06xIPSec": {
-			"Description": "A random IPSec PSK string.",
-			"Type": "String",
-			"NoEcho": true,
-			"MinLength": 10
 		},
 		"04xUsername": {
 			"Description": "The user name for your VPN.",
@@ -506,7 +506,7 @@
 											"[/var/log/dmesg]",
 											"file = /var/log/dmesg",
 											{
-												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/dmesg"
+												"Fn::Sub": "log_group_name = /var/log/dmesg"
 											},
 											{
 												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
@@ -515,7 +515,7 @@
 											"[/var/log/messages]",
 											"file = /var/log/messages",
 											{
-												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/messages"
+												"Fn::Sub": "log_group_name = /var/log/messages"
 											},
 											{
 												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
@@ -525,17 +525,27 @@
 											"[/var/log/docker]",
 											"file = /var/log/docker",
 											{
-												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/docker"
+												"Fn::Sub": "log_group_name = /var/log/docker"
 											},
 											{
 												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
 											},
 											"datetime_format = %Y-%m-%dT%H:%M:%S.%f",
 											"",
+											"[/var/log/cloud-init.log]",
+											"file = /var/log/cloud-init.log",
+											{
+												"Fn::Sub": "log_group_name = /var/log/ecs/audit.log"
+											},
+											{
+												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
+											},
+											"datetime_format = %Y-%m-%dT%H:%M:%SZ",
+											"",
 											"[/var/log/ecs/ecs-init.log]",
 											"file = /var/log/ecs/ecs-init.log.*",
 											{
-												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/ecs/ecs-init.log"
+												"Fn::Sub": "log_group_name = /var/log/ecs/ecs-init.log"
 											},
 											{
 												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
@@ -545,7 +555,7 @@
 											"[/var/log/ecs/ecs-agent.log]",
 											"file = /var/log/ecs/ecs-agent.log.*",
 											{
-												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/ecs/ecs-agent.log"
+												"Fn::Sub": "log_group_name = /var/log/ecs/ecs-agent.log"
 											},
 											{
 												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
@@ -555,7 +565,7 @@
 											"[/var/log/ecs/audit.log]",
 											"file = /var/log/ecs/audit.log.*",
 											{
-												"Fn::Sub": "log_group_name = ${ECSVPNCluster}-/var/log/ecs/audit.log"
+												"Fn::Sub": "log_group_name = /var/log/ecs/audit.log"
 											},
 											{
 												"Fn::Sub": "log_stream_name = ${ECSVPNCluster}"
