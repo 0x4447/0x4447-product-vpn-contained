@@ -22,7 +22,9 @@
 					{ "Name": "VPN_PASSWORD", "Value": { "Ref": "05xPassword" } },
 					{ "Name": "VPN_IPSEC_PSK", "Value": { "Ref": "06xIPSec" } },
 					{ "Name": "VPN_DNS_SRV1", "Value": { "Ref": "07xPrimaryDNS" } },
-					{ "Name": "VPN_DNS_SRV2", "Value": { "Ref": "08xSecondaryDNS" } }
+					{ "Name": "VPN_DNS_SRV2", "Value": { "Ref": "08xSecondaryDNS" } },
+					{ "Name": "VPN_ADDL_USERS", "Value": { "Ref": "UsernameAdditional" } },
+					{ "Name": "VPN_ADDL_PASSWORDS", "Value": { "Ref": "PasswordAdditional" } }
 				],
 				"Image": "hwdsl2/ipsec-vpn-server",
 				"Memory": 128,

@@ -2,20 +2,24 @@
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Description": "This stack deploys a containerized VPN server for one user.",
 	"Parameters": {
-		"01xVPC": {
-			"Description": "Select the VPC to which to deploy the VPN.",
-			"ConstraintDescription": "must be the name of an existing subnet",
-			"Type": "AWS::EC2::VPC::Id"
+		"09xEIP": {
+			"Description": "Type the elastic IP ID that you'd like to associate to the EC2 instance.",
+			"Type": "String"
 		},
-		"02xSubnet": {
-			"Description": "Select the subnet to which to deploy the VPN.",
-			"ConstraintDescription": "must be the name of an existing subnet",
-			"Type": "AWS::EC2::Subnet::Id"
+		"Email": {
+			"Description": "Provide an email to which to send errors from alarms",
+			"Type": "String"
 		},
-		"04xUsername": {
-			"Description": "The user name for your VPN.",
+		"06xIPSec": {
+			"Description": "A random IPSec PSK string.",
 			"Type": "String",
-			"MinLength": 3
+			"NoEcho": true,
+			"MinLength": 10
+		},
+		"KeyName": {
+			"Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+			"Type": "AWS::EC2::KeyPair::KeyName",
+			"ConstraintDescription": "Can contain only ASCII characters."
 		},
 		"05xPassword": {
 			"Description": "The password for your VPN.",
@@ -23,11 +27,10 @@
 			"NoEcho": true,
 			"MinLength": 10
 		},
-		"06xIPSec": {
-			"Description": "A random IPSec PSK string.",
+		"PasswordAdditional": {
+			"Description": "passwords must be separated by spaces.",
 			"Type": "String",
-			"NoEcho": true,
-			"MinLength": 10
+			"NoEcho": true
 		},
 		"07xPrimaryDNS": {
 			"Description": "The primary DNS.",
@@ -39,18 +42,24 @@
 			"Type": "String",
 			"Default": "1.0.0.1"
 		},
-		"09xEIP": {
-			"Description": "Type the elastic IP ID that you'd like to associate to the EC2 instance.",
+		"02xSubnet": {
+			"Description": "Select the subnet to which to deploy the VPN.",
+			"ConstraintDescription": "must be the name of an existing subnet",
+			"Type": "AWS::EC2::Subnet::Id"
+		},
+		"04xUsername": {
+			"Description": "The user name for your VPN.",
+			"Type": "String",
+			"MinLength": 3
+		},
+		"UsernameAdditional": {
+			"Description": "Usernames must be separated by spaces, and cannot contain duplicates. All VPN users will share the same IPsec PSK.",
 			"Type": "String"
 		},
-		"Email": {
-			"Description": "Provide an email to which to send errors from alarms",
-			"Type": "String"
-		},
-		"KeyName": {
-			"Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
-			"Type": "AWS::EC2::KeyPair::KeyName",
-			"ConstraintDescription": "Can contain only ASCII characters."
+		"01xVPC": {
+			"Description": "Select the VPC to which to deploy the VPN.",
+			"ConstraintDescription": "must be the name of an existing subnet",
+			"Type": "AWS::EC2::VPC::Id"
 		}
 	},
 	"Resources": {
@@ -72,6 +81,174 @@
 				"DisplayName": {
 					"Fn::Sub": "${AWS::StackName}-Alert"
 				}
+			}
+		},
+		"ECSVPNCluster": {
+			"Type": "AWS::ECS::Cluster",
+			"Properties": {
+				"ClusterName": {
+					"Ref": "AWS::StackName"
+				}
+			}
+		},
+		"ECSVPNService": {
+			"Type": "AWS::ECS::Service",
+			"Properties": {
+				"Cluster": {
+					"Ref": "ECSVPNCluster"
+				},
+				"LaunchType": "EC2",
+				"SchedulingStrategy": "DAEMON",
+				"TaskDefinition": {
+					"Ref": "ECSVPNTask"
+				}
+			}
+		},
+		"ECSVPNTask": {
+			"Type": "AWS::ECS::TaskDefinition",
+			"Properties": {
+				"Family": {
+					"Ref": "AWS::StackName"
+				},
+				"Volumes": [
+					{
+						"Name": "modules",
+						"Host": {
+							"SourcePath": "/lib/modules"
+						}
+					}
+				],
+				"ExecutionRoleArn": {
+					"Ref": "ECSVPNTaskExecutionRole"
+				},
+				"TaskRoleArn": {
+					"Ref": "ECSVPNTaskTaskRole"
+				},
+				"Memory": "256",
+				"RequiresCompatibilities": [
+					"EC2"
+				],
+				"NetworkMode": "bridge",
+				"ContainerDefinitions": [
+					{
+						"Environment": [
+							{
+								"Name": "VPN_USER",
+								"Value": {
+									"Ref": "04xUsername"
+								}
+							},
+							{
+								"Name": "VPN_PASSWORD",
+								"Value": {
+									"Ref": "05xPassword"
+								}
+							},
+							{
+								"Name": "VPN_IPSEC_PSK",
+								"Value": {
+									"Ref": "06xIPSec"
+								}
+							},
+							{
+								"Name": "VPN_DNS_SRV1",
+								"Value": {
+									"Ref": "07xPrimaryDNS"
+								}
+							},
+							{
+								"Name": "VPN_DNS_SRV2",
+								"Value": {
+									"Ref": "08xSecondaryDNS"
+								}
+							},
+							{
+								"Name": "VPN_ADDL_USERS",
+								"Value": {
+									"Ref": "UsernameAdditional"
+								}
+							},
+							{
+								"Name": "VPN_ADDL_PASSWORDS",
+								"Value": {
+									"Ref": "PasswordAdditional"
+								}
+							}
+						],
+						"Image": "hwdsl2/ipsec-vpn-server",
+						"Memory": 128,
+						"MountPoints": [
+							{
+								"ReadOnly": true,
+								"ContainerPath": "/lib/modules",
+								"SourceVolume": "modules"
+							}
+						],
+						"Name": "VPN",
+						"PortMappings": [
+							{
+								"HostPort": 4500,
+								"Protocol": "udp",
+								"ContainerPort": 4500
+							},
+							{
+								"HostPort": 500,
+								"Protocol": "udp",
+								"ContainerPort": 500
+							}
+						],
+						"Privileged": true,
+						"ReadonlyRootFilesystem": false
+					}
+				]
+			}
+		},
+		"ECSVPNTaskExecutionRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": {
+					"Fn::Sub": "${AWS::StackName}-ECS-Execution"
+				},
+				"AssumeRolePolicyDocument": {
+					"Version": "2008-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "ecs-tasks.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/CloudWatchFullAccess",
+					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+				]
+			}
+		},
+		"ECSVPNTaskTaskRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": {
+					"Fn::Sub": "${AWS::StackName}-ECS-Task"
+				},
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": "ecs-tasks.amazonaws.com"
+							},
+							"Action": "sts:AssumeRole"
+						}
+					]
+				},
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/CloudWatchFullAccess",
+					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+				]
 			}
 		},
 		"CloudWatchDashboard": {
@@ -157,37 +334,6 @@
 						}
 					}
 				]
-			}
-		},
-		"EC2AutoScalingGroup": {
-			"Type": "AWS::AutoScaling::AutoScalingGroup",
-			"Properties": {
-				"DesiredCapacity": 1,
-				"LaunchConfigurationName": {
-					"Ref": "EC2LaunchConfiguration"
-				},
-				"MaxSize": 1,
-				"MinSize": 1,
-				"VPCZoneIdentifier": [
-					{
-						"Ref": "02xSubnet"
-					}
-				]
-			},
-			"UpdatePolicy": {
-				"AutoScalingRollingUpdate": {
-					"MaxBatchSize": 1,
-					"MinInstancesInService": 0,
-					"PauseTime": "PT15M",
-					"SuspendProcesses": [
-						"HealthCheck",
-						"ReplaceUnhealthy",
-						"AZRebalance",
-						"AlarmNotification",
-						"ScheduledActions"
-					],
-					"WaitOnResourceSignals": true
-				}
 			}
 		},
 		"ECSInstanceProfile": {
@@ -413,6 +559,37 @@
 				}
 			}
 		},
+		"EC2AutoScalingGroup": {
+			"Type": "AWS::AutoScaling::AutoScalingGroup",
+			"Properties": {
+				"DesiredCapacity": 1,
+				"LaunchConfigurationName": {
+					"Ref": "EC2LaunchConfiguration"
+				},
+				"MaxSize": 1,
+				"MinSize": 1,
+				"VPCZoneIdentifier": [
+					{
+						"Ref": "02xSubnet"
+					}
+				]
+			},
+			"UpdatePolicy": {
+				"AutoScalingRollingUpdate": {
+					"MaxBatchSize": 1,
+					"MinInstancesInService": 0,
+					"PauseTime": "PT15M",
+					"SuspendProcesses": [
+						"HealthCheck",
+						"ReplaceUnhealthy",
+						"AZRebalance",
+						"AlarmNotification",
+						"ScheduledActions"
+					],
+					"WaitOnResourceSignals": true
+				}
+			}
+		},
 		"VPNSecurityGroup": {
 			"Type": "AWS::EC2::SecurityGroup",
 			"Properties": {
@@ -496,162 +673,6 @@
 					"arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
 					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
 					"arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-				]
-			}
-		},
-		"ECSVPNCluster": {
-			"Type": "AWS::ECS::Cluster",
-			"Properties": {
-				"ClusterName": {
-					"Ref": "AWS::StackName"
-				}
-			}
-		},
-		"ECSVPNService": {
-			"Type": "AWS::ECS::Service",
-			"Properties": {
-				"Cluster": {
-					"Ref": "ECSVPNCluster"
-				},
-				"LaunchType": "EC2",
-				"SchedulingStrategy": "DAEMON",
-				"TaskDefinition": {
-					"Ref": "ECSVPNTask"
-				}
-			}
-		},
-		"ECSVPNTask": {
-			"Type": "AWS::ECS::TaskDefinition",
-			"Properties": {
-				"Family": {
-					"Ref": "AWS::StackName"
-				},
-				"Volumes": [
-					{
-						"Name": "modules",
-						"Host": {
-							"SourcePath": "/lib/modules"
-						}
-					}
-				],
-				"ExecutionRoleArn": {
-					"Ref": "ECSVPNTaskExecutionRole"
-				},
-				"TaskRoleArn": {
-					"Ref": "ECSVPNTaskTaskRole"
-				},
-				"Memory": "256",
-				"RequiresCompatibilities": [
-					"EC2"
-				],
-				"NetworkMode": "bridge",
-				"ContainerDefinitions": [
-					{
-						"Environment": [
-							{
-								"Name": "VPN_USER",
-								"Value": {
-									"Ref": "04xUsername"
-								}
-							},
-							{
-								"Name": "VPN_PASSWORD",
-								"Value": {
-									"Ref": "05xPassword"
-								}
-							},
-							{
-								"Name": "VPN_IPSEC_PSK",
-								"Value": {
-									"Ref": "06xIPSec"
-								}
-							},
-							{
-								"Name": "VPN_DNS_SRV1",
-								"Value": {
-									"Ref": "07xPrimaryDNS"
-								}
-							},
-							{
-								"Name": "VPN_DNS_SRV2",
-								"Value": {
-									"Ref": "08xSecondaryDNS"
-								}
-							}
-						],
-						"Image": "hwdsl2/ipsec-vpn-server",
-						"Memory": 128,
-						"MountPoints": [
-							{
-								"ReadOnly": true,
-								"ContainerPath": "/lib/modules",
-								"SourceVolume": "modules"
-							}
-						],
-						"Name": "VPN",
-						"PortMappings": [
-							{
-								"HostPort": 4500,
-								"Protocol": "udp",
-								"ContainerPort": 4500
-							},
-							{
-								"HostPort": 500,
-								"Protocol": "udp",
-								"ContainerPort": 500
-							}
-						],
-						"Privileged": true,
-						"ReadonlyRootFilesystem": false
-					}
-				]
-			}
-		},
-		"ECSVPNTaskExecutionRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": {
-					"Fn::Sub": "${AWS::StackName}-ECS-Execution"
-				},
-				"AssumeRolePolicyDocument": {
-					"Version": "2008-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "ecs-tasks.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				},
-				"ManagedPolicyArns": [
-					"arn:aws:iam::aws:policy/CloudWatchFullAccess",
-					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-				]
-			}
-		},
-		"ECSVPNTaskTaskRole": {
-			"Type": "AWS::IAM::Role",
-			"Properties": {
-				"RoleName": {
-					"Fn::Sub": "${AWS::StackName}-ECS-Task"
-				},
-				"AssumeRolePolicyDocument": {
-					"Version": "2012-10-17",
-					"Statement": [
-						{
-							"Effect": "Allow",
-							"Principal": {
-								"Service": "ecs-tasks.amazonaws.com"
-							},
-							"Action": "sts:AssumeRole"
-						}
-					]
-				},
-				"ManagedPolicyArns": [
-					"arn:aws:iam::aws:policy/CloudWatchFullAccess",
-					"arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 				]
 			}
 		}

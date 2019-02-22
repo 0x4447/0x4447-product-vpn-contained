@@ -6,7 +6,7 @@ phases:
       - npm install -g @0x4447/grapes@1.0.2
   build:
     commands:
-      - grapes -b -s ./Stack_VPN_Contained
+      - grapes -b -s ./stack_vpn_contained
   post_build:
     finally:
-      - aws s3 cp ./Stack_VPN_Contained/CloudFormation.json s3://0x4447-drive-cloudformation/vpn-contained.json --acl public-read
+      - aws s3 cp ./stack_vpn_contained/CloudFormation.json s3://0x4447-drive-cloudformation/vpn-contained.json --acl public-read

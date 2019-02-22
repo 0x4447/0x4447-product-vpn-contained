@@ -1,0 +1,6 @@
+{
+	"UsernameAdditional": {
+		"Description": "Usernames must be separated by spaces, and cannot contain duplicates. All VPN users will share the same IPsec PSK.",
+		"Type": "String"
+	}
+}
