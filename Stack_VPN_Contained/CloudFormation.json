@@ -2,12 +2,18 @@
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Description": "This stack deploys a containerized VPN server for one user.",
 	"Parameters": {
-		"09xEIP": {
-			"Description": "Type the elastic IP ID that you'd like to associate to the EC2 instance.",
-			"Type": "String"
+		"06xIPSec": {
+			"Description": "A random IPSec PSK string.",
+			"Type": "String",
+			"NoEcho": true,
+			"MinLength": 10
 		},
 		"Email": {
 			"Description": "Provide an email to which to send errors from alarms",
+			"Type": "String"
+		},
+		"09xEIP": {
+			"Description": "Type the elastic IP ID that you'd like to associate to the EC2 instance.",
 			"Type": "String"
 		},
 		"KeyName": {
@@ -15,27 +21,10 @@
 			"Type": "AWS::EC2::KeyPair::KeyName",
 			"ConstraintDescription": "Can contain only ASCII characters."
 		},
-		"06xIPSec": {
-			"Description": "A random IPSec PSK string.",
-			"Type": "String",
-			"NoEcho": true,
-			"MinLength": 10
-		},
-		"05xPassword": {
-			"Description": "The password for your VPN.",
-			"Type": "String",
-			"NoEcho": true,
-			"MinLength": 10
-		},
 		"PasswordAdditional": {
 			"Description": "passwords must be separated by spaces.",
 			"Type": "String",
 			"NoEcho": true
-		},
-		"07xPrimaryDNS": {
-			"Description": "The primary DNS.",
-			"Type": "String",
-			"Default": "1.1.1.1"
 		},
 		"08xSecondaryDNS": {
 			"Description": "The secondary DNS.",
@@ -46,6 +35,17 @@
 			"Description": "Select the subnet to which to deploy the VPN.",
 			"ConstraintDescription": "must be the name of an existing subnet",
 			"Type": "AWS::EC2::Subnet::Id"
+		},
+		"07xPrimaryDNS": {
+			"Description": "The primary DNS.",
+			"Type": "String",
+			"Default": "1.1.1.1"
+		},
+		"05xPassword": {
+			"Description": "The password for your VPN.",
+			"Type": "String",
+			"NoEcho": true,
+			"MinLength": 10
 		},
 		"04xUsername": {
 			"Description": "The user name for your VPN.",
@@ -63,26 +63,6 @@
 		}
 	},
 	"Resources": {
-		"Subscription": {
-			"Type": "AWS::SNS::Subscription",
-			"Properties": {
-				"Endpoint": {
-					"Ref": "Email"
-				},
-				"Protocol": "email",
-				"TopicArn": {
-					"Ref": "SNSTopic"
-				}
-			}
-		},
-		"SNSTopic": {
-			"Type": "AWS::SNS::Topic",
-			"Properties": {
-				"DisplayName": {
-					"Fn::Sub": "${AWS::StackName}-Alert"
-				}
-			}
-		},
 		"CloudWatchDashboard": {
 			"Type": "AWS::CloudWatch::Dashboard",
 			"Properties": {
@@ -110,7 +90,7 @@
 				"AlarmName": {
 					"Fn::Sub": "${AWS::StackName}-CPU"
 				},
-				"AlarmDescription": "Track CPU utilization across all the EC2",
+				"AlarmDescription": "Track CPU utilization.",
 				"TreatMissingData": "notBreaching",
 				"ActionsEnabled": true,
 				"AlarmActions": [
@@ -125,6 +105,38 @@
 				"Threshold": 75,
 				"Namespace": "AWS/EC2",
 				"MetricName": "CPUUtilization",
+				"Statistic": "Average",
+				"Dimensions": [
+					{
+						"Name": "AutoScalingGroupName",
+						"Value": {
+							"Ref": "EC2AutoScalingGroup"
+						}
+					}
+				]
+			}
+		},
+		"CPUBurstAlarm": {
+			"Type": "AWS::CloudWatch::Alarm",
+			"Properties": {
+				"AlarmName": {
+					"Fn::Sub": "${AWS::StackName}-CPU-Burst"
+				},
+				"AlarmDescription": "Track CPU Burst utilization.",
+				"TreatMissingData": "notBreaching",
+				"ActionsEnabled": true,
+				"AlarmActions": [
+					{
+						"Ref": "SNSTopic"
+					}
+				],
+				"ComparisonOperator": "GreaterThanOrEqualToThreshold",
+				"EvaluationPeriods": 1,
+				"Unit": "Count",
+				"Period": 300,
+				"Threshold": 100,
+				"Namespace": "AWS/EC2",
+				"MetricName": "CPUSurplusCreditBalance",
 				"Statistic": "Average",
 				"Dimensions": [
 					{
@@ -166,6 +178,26 @@
 						}
 					}
 				]
+			}
+		},
+		"Subscription": {
+			"Type": "AWS::SNS::Subscription",
+			"Properties": {
+				"Endpoint": {
+					"Ref": "Email"
+				},
+				"Protocol": "email",
+				"TopicArn": {
+					"Ref": "SNSTopic"
+				}
+			}
+		},
+		"SNSTopic": {
+			"Type": "AWS::SNS::Topic",
+			"Properties": {
+				"DisplayName": {
+					"Fn::Sub": "${AWS::StackName}-Alert"
+				}
 			}
 		},
 		"ECSVPNCluster": {
