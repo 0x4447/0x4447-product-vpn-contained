@@ -1,6 +1,6 @@
 # 0x4447 Contained VPN
 
-This folder contains a CloudFormation file that, when deployed, will create L2TP, IPSec, and CISCO IPSec VPN servers in your selected AWS account.
+This folder `Stack_VPN_Contained` contains a CloudFormation file that, when deployed, will create L2TP, IPSec, and CISCO IPSec VPN servers in your selected AWS account.
 
 The stack is ideal for connecting your office to AWS resources and making those resources available to your local office network, as well as securing your Internet connection.
 
@@ -17,7 +17,7 @@ Don't expect this stack to do everything for you. For example, the CF file itsel
 <a target="_blank" href="https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=zer0x4447-VPN-Contained&templateURL=https://s3.amazonaws.com/0x4447-drive-cloudformation/vpn-contained.json">
 <img align="left" style="float: left; margin: 0 10px 0 0;" src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png"></a>
 
-To deploy this stack just click the button to the left, and follow the instructions that CloudFormation provides in your AWS Dashboard.
+To deploy this stack just click the button to the left, and follow the instructions that CloudFormation provides in your AWS Dashboard. Alternatively you can download the CF file from [here](https://s3.amazonaws.com/0x4447-drive-cloudformation/vpn-contained.json).
 
 # What deploys
 
@@ -35,8 +35,9 @@ The image above shows the stack that deploys. The following is a detailed list o
 	- 1x Security Group
 - 1x CloudWatch Dashboard
 - 1x CloudWatch Logs
-- 2x CloudWatch Alerts
+- 3x CloudWatch Alerts
   - EC2 CPU
+  - EC2 CPU Burst
   - EC2 RAM
 
 # How it works
@@ -46,7 +47,7 @@ The VPN servers are created using the [hwdsl2/ipsec-vpn-server](https://github.c
 - If the Docker container crashes at some point, ECS automatically restarts it.
 - If the EC2 server is terminated for whatever reason, a new instance will take its place.
 
-Additional benefit: You can purposely terminate the EC2 instance if you notice that network performance is deteriorating, which can happen when working in a shared environment. If your machine is running another instance that uses more resources than average, it may adversely affect performance. If this happens, terminate the instance and then wait about two minutes. Hopefully, the new EC2 Instance will be created on a different machine with less load.
+**Additional benefit**: You can purposely terminate the EC2 instance if you notice that network performance is deteriorating, which can happen when working in a shared VM environment. If this happens, terminate the instance and then wait about two minutes. Hopefully, the new EC2 Instance will be created on a different machine with less load.
 
 This gives you a very resilient solution that's hard to break, and with all unique settings stored in the ENVIRONMENT variables, your credentials always stay the same. The same goes for your public Elastic IP.
 
@@ -63,7 +64,7 @@ The best way to take advantage of these benefits is to have a unique AWS Account
 - One free Elastic IP per AWS account
 - Free Tree CloudWatch Dashboard for each account
 - Ease of limiting access to this AWS VPN account
-- More precise access to resources through VPC Peering
+- More precise access to other accounts through VPC Peering
 
 # Pricing
 
@@ -89,13 +90,11 @@ The network traffic price depends on how much you use it, but here's an example 
 
 ## Alarms
 
-The alarms in your account will cost ten cents apiece, and we create two of them. Check the [AWS pricing page](https://aws.amazon.com/cloudwatch/pricing/) to make sure this calculation is still valid.
+The alarms in your account will cost ten cents apiece, and we create three of them. Check the [AWS pricing page](https://aws.amazon.com/cloudwatch/pricing/) to make sure this calculation is still valid.
 
 # Monitoring
 
 To provide you with a clear insight into the resources that are available to you, we built a detailed dashboard that graphically shows exactly what's happening in your EC2 instance and container. In addition, it will set alarms to let you know when key aspects of the deployment are acting out, and the EC2 will push logs to CloudWatch to give you a detailed view of the instance's insides without the need for SSH inside the machine.
-
-Depending on how much data is pushed from the EC2 to CloudWatch you might pay around ~$18 per month.
 
 ## Dashboard
 
@@ -105,16 +104,17 @@ As you can see in the image above, you'll have a clear view of what's going on w
 
 ## Alerts
 
-To help you sleep better at night, we've included two CloudWatch Alerts. This ensures that you'll receive an email from AWS to inform you when the EC2 instance's CPU or RAM goes above a certain threshold so you can take appropriate actions.
+To help you sleep better at night, we've included three CloudWatch Alerts. This ensures that you'll receive an email from AWS to inform you when the EC2 instance's CPU, CPU Burst or RAM goes above a certain threshold so you can take appropriate actions.
 
 ## Logs
 
 We also send logs to CloudWatch to make it easy to see exactly what is going on inside the EC2 instance without the need to log in to the machine itself. We exposed the following logs:
 
-- dmesg
-- docker
-- ecs-agent.log
-- messages
+- /var/log/dmesg
+- /var/log/docker
+- /var/log/ecs/audit.log
+- /var/log/ecs/ecs-agent.log
+- /var/log/messages
 
 # How to work with this project
 
