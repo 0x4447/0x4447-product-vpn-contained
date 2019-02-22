@@ -15,12 +15,6 @@
 			],
 			"SecurityGroupIngress": [
 				{
-					"IpProtocol" : "tcp",
-					"FromPort" : 22,
-					"ToPort" : 22,
-					"CidrIp" : "0.0.0.0/0"
-				},
-				{
 					"IpProtocol" : "udp",
 					"FromPort" : 4500,
 					"ToPort" : 4500,
