@@ -2,16 +2,16 @@
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Description": "This stack deploys a containerized VPN server for one user.",
 	"Parameters": {
-		"09xEIP": {
-			"Description": "Type the elastic IP ID that you'd like to associate to the EC2 instance.",
-			"Type": "String"
-		},
 		"Email": {
 			"Description": "Provide an email to which to send errors from alarms",
 			"Type": "String"
 		},
-		"06xIPSec": {
-			"Description": "A random IPSec PSK string.",
+		"09xEIP": {
+			"Description": "Type the elastic IP ID that you'd like to associate to the EC2 instance.",
+			"Type": "String"
+		},
+		"05xPassword": {
+			"Description": "The password for your VPN.",
 			"Type": "String",
 			"NoEcho": true,
 			"MinLength": 10
@@ -21,21 +21,15 @@
 			"Type": "AWS::EC2::KeyPair::KeyName",
 			"ConstraintDescription": "Can contain only ASCII characters."
 		},
-		"05xPassword": {
-			"Description": "The password for your VPN.",
+		"07xPrimaryDNS": {
+			"Description": "The primary DNS.",
 			"Type": "String",
-			"NoEcho": true,
-			"MinLength": 10
+			"Default": "1.1.1.1"
 		},
 		"PasswordAdditional": {
 			"Description": "passwords must be separated by spaces.",
 			"Type": "String",
 			"NoEcho": true
-		},
-		"07xPrimaryDNS": {
-			"Description": "The primary DNS.",
-			"Type": "String",
-			"Default": "1.1.1.1"
 		},
 		"08xSecondaryDNS": {
 			"Description": "The secondary DNS.",
@@ -46,6 +40,12 @@
 			"Description": "Select the subnet to which to deploy the VPN.",
 			"ConstraintDescription": "must be the name of an existing subnet",
 			"Type": "AWS::EC2::Subnet::Id"
+		},
+		"06xIPSec": {
+			"Description": "A random IPSec PSK string.",
+			"Type": "String",
+			"NoEcho": true,
+			"MinLength": 10
 		},
 		"04xUsername": {
 			"Description": "The user name for your VPN.",
@@ -81,6 +81,91 @@
 				"DisplayName": {
 					"Fn::Sub": "${AWS::StackName}-Alert"
 				}
+			}
+		},
+		"CloudWatchDashboard": {
+			"Type": "AWS::CloudWatch::Dashboard",
+			"Properties": {
+				"DashboardName": {
+					"Ref": "AWS::StackName"
+				},
+				"DashboardBody": {
+					"Fn::Sub": [
+						"{\r\n    \"widgets\": [\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 9,\r\n            \"y\": 0,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"stat\": \"Sum\" } ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\", \"stat\": \"Sum\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Network In & Out\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 3,\r\n            \"width\": 24,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"CPUUtilization\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\" ],\r\n                    [ \".\", \"CPUCreditUsage\", \".\", \".\", { \"yAxis\": \"right\", \"color\": \"#d62728\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"EC2 CPU Time & Credit Usage\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 0,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"id\": \"m1\", \"stat\": \"Sum\", \"period\": 2592000 } ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\", \"id\": \"m2\", \"stat\": \"Sum\", \"period\": 2592000 } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Total traffic\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 15,\r\n            \"y\": 9,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"mem_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\" } ],\r\n                    [ \".\", \"mem_used\", \".\", \".\", { \"color\": \"#ff7f0e\" } ],\r\n                    [ \".\", \"mem_available\", \".\", \".\" ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"RAM\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 9,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"mem_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"mem_used\", \".\", \".\", { \"color\": \"#2ca02c\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"mem_cached\", \".\", \".\", { \"color\": \"#8c564b\", \"period\": 2592000, \"stat\": \"Maximum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"RAM\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 15,\r\n            \"y\": 12,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"processes_running\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#2ca02c\" } ],\r\n                    [ \".\", \"processes_sleeping\", \".\", \".\" ],\r\n                    [ \".\", \"processes_dead\", \".\", \".\", { \"color\": \"#8c564b\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Processes\"\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 12,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"processes_running\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#2ca02c\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"processes_sleeping\", \".\", \".\", { \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"processes_dead\", \".\", \".\", { \"color\": \"#8c564b\", \"period\": 2592000, \"stat\": \"Maximum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Processes\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 15,\r\n            \"y\": 15,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"disk_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\" } ],\r\n                    [ \".\", \"disk_used\", \".\", \".\", { \"color\": \"#1f77b4\" } ],\r\n                    [ \".\", \"disk_free\", \".\", \".\" ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"HDD\"\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 15,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"disk_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"disk_used\", \".\", \".\", { \"color\": \"#1f77b4\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"disk_free\", \".\", \".\", { \"period\": 2592000, \"stat\": \"Maximum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"HDD\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 3,\r\n            \"y\": 6,\r\n            \"width\": 21,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/ECS\", \"CPUUtilization\", \"ClusterName\", \"${ClusterName}\", { \"stat\": \"Average\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"ECS CPU Time\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 6,\r\n            \"width\": 3,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/ECS\", \"CPUUtilization\", \"ClusterName\", \"${ClusterName}\", { \"stat\": \"Average\", \"period\": 2592000 } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Average\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 18,\r\n            \"width\": 24,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/Logs\", \"IncomingLogEvents\", \"LogGroupName\", \"VPN-/var/log/ecs/ecs-agent.log\", { \"stat\": \"Sum\" } ],\r\n                    [ \"...\", \"VPN-/var/log/messages\", { \"stat\": \"Sum\" } ],\r\n                    [ \"...\", \"VPN-/var/log/docker\", { \"stat\": \"Sum\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Logs Intake\",\r\n                \"period\": 300\r\n            }\r\n        }\r\n    ]\r\n}",
+						{
+							"AutoScalingGroupName": {
+								"Ref": "EC2AutoScalingGroup"
+							},
+							"ClusterName": {
+								"Ref": "AWS::StackName"
+							}
+						}
+					]
+				}
+			}
+		},
+		"CPUAlarm": {
+			"Type": "AWS::CloudWatch::Alarm",
+			"Properties": {
+				"AlarmName": {
+					"Fn::Sub": "${AWS::StackName}-CPU"
+				},
+				"AlarmDescription": "Track CPU utilization across all the EC2",
+				"TreatMissingData": "notBreaching",
+				"ActionsEnabled": true,
+				"AlarmActions": [
+					{
+						"Ref": "SNSTopic"
+					}
+				],
+				"ComparisonOperator": "GreaterThanOrEqualToThreshold",
+				"EvaluationPeriods": 1,
+				"Unit": "Count",
+				"Period": 300,
+				"Threshold": 75,
+				"Namespace": "AWS/EC2",
+				"MetricName": "CPUUtilization",
+				"Statistic": "Average",
+				"Dimensions": [
+					{
+						"Name": "AutoScalingGroupName",
+						"Value": {
+							"Ref": "EC2AutoScalingGroup"
+						}
+					}
+				]
+			}
+		},
+		"RAMAlarm": {
+			"Type": "AWS::CloudWatch::Alarm",
+			"Properties": {
+				"AlarmName": {
+					"Fn::Sub": "${AWS::StackName}-RAM"
+				},
+				"AlarmDescription": "Track RAM utilization across all the EC2",
+				"TreatMissingData": "notBreaching",
+				"ActionsEnabled": true,
+				"AlarmActions": [
+					{
+						"Ref": "SNSTopic"
+					}
+				],
+				"ComparisonOperator": "GreaterThanOrEqualToThreshold",
+				"EvaluationPeriods": 1,
+				"Unit": "Count",
+				"Period": 300,
+				"Threshold": 400000000,
+				"Namespace": "CWAgent",
+				"MetricName": "mem_used",
+				"Statistic": "Average",
+				"Dimensions": [
+					{
+						"Name": "AutoScalingGroupName",
+						"Value": {
+							"Ref": "EC2AutoScalingGroup"
+						}
+					}
+				]
 			}
 		},
 		"ECSVPNCluster": {
@@ -251,89 +336,35 @@
 				]
 			}
 		},
-		"CloudWatchDashboard": {
-			"Type": "AWS::CloudWatch::Dashboard",
+		"EC2AutoScalingGroup": {
+			"Type": "AWS::AutoScaling::AutoScalingGroup",
 			"Properties": {
-				"DashboardName": {
-					"Ref": "AWS::StackName"
+				"DesiredCapacity": 1,
+				"LaunchConfigurationName": {
+					"Ref": "EC2LaunchConfiguration"
 				},
-				"DashboardBody": {
-					"Fn::Sub": [
-						"{\r\n    \"widgets\": [\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 9,\r\n            \"y\": 0,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\" ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Network In & Out\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 3,\r\n            \"width\": 24,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"CPUUtilization\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\" ],\r\n                    [ \".\", \"CPUCreditUsage\", \".\", \".\", { \"yAxis\": \"right\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"EC2 CPU Time & Credit Usage\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 0,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/EC2\", \"NetworkIn\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"id\": \"m1\", \"stat\": \"Sum\", \"period\": 2592000 } ],\r\n                    [ \".\", \"NetworkOut\", \".\", \".\", { \"yAxis\": \"right\", \"id\": \"m2\", \"stat\": \"Sum\", \"period\": 2592000 } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Total traffic\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 15,\r\n            \"y\": 9,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"mem_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\" } ],\r\n                    [ \".\", \"mem_used\", \".\", \".\", { \"color\": \"#2ca02c\" } ],\r\n                    [ \".\", \"mem_cached\", \".\", \".\", { \"color\": \"#8c564b\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"RAM\"\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 9,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"mem_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"mem_used\", \".\", \".\", { \"color\": \"#2ca02c\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"mem_cached\", \".\", \".\", { \"color\": \"#8c564b\", \"period\": 2592000, \"stat\": \"Maximum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"RAM\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 15,\r\n            \"y\": 12,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"processes_running\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#2ca02c\" } ],\r\n                    [ \".\", \"processes_sleeping\", \".\", \".\" ],\r\n                    [ \".\", \"processes_dead\", \".\", \".\", { \"color\": \"#8c564b\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Processes\"\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 12,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"processes_running\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#2ca02c\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"processes_sleeping\", \".\", \".\", { \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"processes_dead\", \".\", \".\", { \"color\": \"#8c564b\", \"period\": 2592000, \"stat\": \"Maximum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Processes\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 15,\r\n            \"y\": 15,\r\n            \"width\": 9,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"disk_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\" } ],\r\n                    [ \".\", \"disk_used\", \".\", \".\", { \"color\": \"#1f77b4\" } ],\r\n                    [ \".\", \"disk_free\", \".\", \".\" ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"HDD\"\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 15,\r\n            \"width\": 15,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"CWAgent\", \"disk_total\", \"AutoScalingGroupName\", \"${AutoScalingGroupName}\", { \"color\": \"#d62728\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"disk_used\", \".\", \".\", { \"color\": \"#1f77b4\", \"period\": 2592000, \"stat\": \"Maximum\" } ],\r\n                    [ \".\", \"disk_free\", \".\", \".\", { \"period\": 2592000, \"stat\": \"Maximum\" } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"HDD\",\r\n                \"period\": 300\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 3,\r\n            \"y\": 6,\r\n            \"width\": 21,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/ECS\", \"CPUUtilization\", \"ClusterName\", \"${ClusterName}\", { \"stat\": \"Maximum\" } ]\r\n                ],\r\n                \"view\": \"timeSeries\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"ECS CPU Time\"\r\n            }\r\n        },\r\n        {\r\n            \"type\": \"metric\",\r\n            \"x\": 0,\r\n            \"y\": 6,\r\n            \"width\": 3,\r\n            \"height\": 3,\r\n            \"properties\": {\r\n                \"metrics\": [\r\n                    [ \"AWS/ECS\", \"CPUUtilization\", \"ClusterName\", \"${ClusterName}\", { \"stat\": \"Average\", \"period\": 2592000 } ]\r\n                ],\r\n                \"view\": \"singleValue\",\r\n                \"stacked\": false,\r\n                \"region\": \"us-east-1\",\r\n                \"title\": \"Average\",\r\n                \"period\": 300\r\n            }\r\n        }\r\n    ]\r\n}",
-						{
-							"AutoScalingGroupName": {
-								"Ref": "EC2AutoScalingGroup"
-							},
-							"ClusterName": {
-								"Ref": "AWS::StackName"
-							}
-						}
-					]
+				"MaxSize": 1,
+				"MinSize": 1,
+				"VPCZoneIdentifier": [
+					{
+						"Ref": "02xSubnet"
+					}
+				]
+			},
+			"UpdatePolicy": {
+				"AutoScalingRollingUpdate": {
+					"MaxBatchSize": 1,
+					"MinInstancesInService": 0,
+					"PauseTime": "PT15M",
+					"SuspendProcesses": [
+						"HealthCheck",
+						"ReplaceUnhealthy",
+						"AZRebalance",
+						"AlarmNotification",
+						"ScheduledActions"
+					],
+					"WaitOnResourceSignals": true
 				}
-			}
-		},
-		"CPUAlarm": {
-			"Type": "AWS::CloudWatch::Alarm",
-			"Properties": {
-				"AlarmName": {
-					"Fn::Sub": "${AWS::StackName}-CPU"
-				},
-				"AlarmDescription": "Track CPU utilization across all the EC2",
-				"TreatMissingData": "notBreaching",
-				"ActionsEnabled": true,
-				"AlarmActions": [
-					{
-						"Ref": "SNSTopic"
-					}
-				],
-				"ComparisonOperator": "GreaterThanOrEqualToThreshold",
-				"EvaluationPeriods": 1,
-				"Unit": "Count",
-				"Period": 300,
-				"Threshold": 75,
-				"Namespace": "AWS/EC2",
-				"MetricName": "CPUUtilization",
-				"Statistic": "Average",
-				"Dimensions": [
-					{
-						"Name": "AutoScalingGroupName",
-						"Value": {
-							"Ref": "EC2AutoScalingGroup"
-						}
-					}
-				]
-			}
-		},
-		"RAMAlarm": {
-			"Type": "AWS::CloudWatch::Alarm",
-			"Properties": {
-				"AlarmName": {
-					"Fn::Sub": "${AWS::StackName}-RAM"
-				},
-				"AlarmDescription": "Track RAM utilization across all the EC2",
-				"TreatMissingData": "notBreaching",
-				"ActionsEnabled": true,
-				"AlarmActions": [
-					{
-						"Ref": "SNSTopic"
-					}
-				],
-				"ComparisonOperator": "GreaterThanOrEqualToThreshold",
-				"EvaluationPeriods": 1,
-				"Unit": "Count",
-				"Period": 300,
-				"Threshold": 400000000,
-				"Namespace": "CWAgent",
-				"MetricName": "mem_used",
-				"Statistic": "Average",
-				"Dimensions": [
-					{
-						"Name": "AutoScalingGroupName",
-						"Value": {
-							"Ref": "EC2AutoScalingGroup"
-						}
-					}
-				]
 			}
 		},
 		"ECSInstanceProfile": {
@@ -392,7 +423,7 @@
 								"curl -O https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip",
 								"unzip AmazonCloudWatchAgent.zip",
 								"sudo ./install.sh",
-								"echo ewoJIm1ldHJpY3MiOiB7CgkJIm1ldHJpY3NfY29sbGVjdGVkIjogewoJCQkiY3B1IjogewoJCQkJInJlc291cmNlcyI6IFsiKiJdLAoJCQkJIm1lYXN1cmVtZW50IjogWyJ1c2FnZV9zeXN0ZW0iLCAidXNhZ2VfdXNlciJdLAoJCQkJInRvdGFsY3B1IjogZmFsc2UKCQkJfSwKCQkJImRpc2siOiB7CgkJCQkicmVzb3VyY2VzIjogWyIqIl0sCgkJCQkibWVhc3VyZW1lbnQiOiBbImZyZWUiLCAidG90YWwiLCAidXNlZCJdCgkJCX0sCgkJCSJwcm9jZXNzZXMiOiB7CgkJCQkibWVhc3VyZW1lbnQiOiBbInJ1bm5pbmciLCAic2xlZXBpbmciLCAiZGVhZCJdCgkJCX0sCgkJCSJtZW0iOiB7CgkJCQkibWVhc3VyZW1lbnQiOiBbInRvdGFsIiwgInVzZWQiLCAiY2FjaGVkIl0KCQkJfQoJCX0sCgkJImFwcGVuZF9kaW1lbnNpb25zIjogewoJCQkiSW1hZ2VJZCI6ICIke2F3czpJbWFnZUlkfSIsCgkJCSJJbnN0YW5jZUlkIjogIiR7YXdzOkluc3RhbmNlSWR9IiwKCQkJIkluc3RhbmNlVHlwZSI6ICIke2F3czpJbnN0YW5jZVR5cGV9IiwKCQkJIkF1dG9TY2FsaW5nR3JvdXBOYW1lIjogIiR7YXdzOkF1dG9TY2FsaW5nR3JvdXBOYW1lfSIKCQl9LAoJCSJhZ2dyZWdhdGlvbl9kaW1lbnNpb25zIiA6IFtbIkF1dG9TY2FsaW5nR3JvdXBOYW1lIl0sIFsiSW5zdGFuY2VJZCIsICJJbnN0YW5jZVR5cGUiXV0KCX0KfQ== | base64 --decode > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
+								"echo ewoJIm1ldHJpY3MiOiB7CgkJIm1ldHJpY3NfY29sbGVjdGVkIjogewoJCQkiY3B1IjogewoJCQkJInJlc291cmNlcyI6IFsiKiJdLAoJCQkJIm1lYXN1cmVtZW50IjogWyJ1c2FnZV9zeXN0ZW0iLCAidXNhZ2VfdXNlciJdLAoJCQkJInRvdGFsY3B1IjogZmFsc2UKCQkJfSwKCQkJImRpc2siOiB7CgkJCQkicmVzb3VyY2VzIjogWyIqIl0sCgkJCQkibWVhc3VyZW1lbnQiOiBbImZyZWUiLCAidG90YWwiLCAidXNlZCJdCgkJCX0sCgkJCSJwcm9jZXNzZXMiOiB7CgkJCQkibWVhc3VyZW1lbnQiOiBbInJ1bm5pbmciLCAic2xlZXBpbmciLCAiZGVhZCJdCgkJCX0sCgkJCSJtZW0iOiB7CgkJCQkibWVhc3VyZW1lbnQiOiBbImF2YWlsYWJsZSIsICJ0b3RhbCIsICJ1c2VkIl0KCQkJfQoJCX0sCgkJImFwcGVuZF9kaW1lbnNpb25zIjogewoJCQkiSW1hZ2VJZCI6ICIke2F3czpJbWFnZUlkfSIsCgkJCSJJbnN0YW5jZUlkIjogIiR7YXdzOkluc3RhbmNlSWR9IiwKCQkJIkluc3RhbmNlVHlwZSI6ICIke2F3czpJbnN0YW5jZVR5cGV9IiwKCQkJIkF1dG9TY2FsaW5nR3JvdXBOYW1lIjogIiR7YXdzOkF1dG9TY2FsaW5nR3JvdXBOYW1lfSIKCQl9LAoJCSJhZ2dyZWdhdGlvbl9kaW1lbnNpb25zIiA6IFtbIkF1dG9TY2FsaW5nR3JvdXBOYW1lIl0sIFsiSW5zdGFuY2VJZCIsICJJbnN0YW5jZVR5cGUiXV0KCX0KfQ== | base64 --decode > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
 								"sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s",
 								{
 									"Fn::Sub": "sudo /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource EC2LaunchConfiguration"
@@ -556,37 +587,6 @@
 							}
 						}
 					}
-				}
-			}
-		},
-		"EC2AutoScalingGroup": {
-			"Type": "AWS::AutoScaling::AutoScalingGroup",
-			"Properties": {
-				"DesiredCapacity": 1,
-				"LaunchConfigurationName": {
-					"Ref": "EC2LaunchConfiguration"
-				},
-				"MaxSize": 1,
-				"MinSize": 1,
-				"VPCZoneIdentifier": [
-					{
-						"Ref": "02xSubnet"
-					}
-				]
-			},
-			"UpdatePolicy": {
-				"AutoScalingRollingUpdate": {
-					"MaxBatchSize": 1,
-					"MinInstancesInService": 0,
-					"PauseTime": "PT15M",
-					"SuspendProcesses": [
-						"HealthCheck",
-						"ReplaceUnhealthy",
-						"AZRebalance",
-						"AlarmNotification",
-						"ScheduledActions"
-					],
-					"WaitOnResourceSignals": true
 				}
 			}
 		},
