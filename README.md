@@ -17,7 +17,7 @@ Don't expect this stack to do everything for you. For example, the CF file itsel
 <a target="_blank" href="https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=zer0x4447-VPN-Contained&templateURL=https://s3.amazonaws.com/0x4447-drive-cloudformation/vpn-contained.json">
 <img align="left" style="float: left; margin: 0 10px 0 0;" src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png"></a>
 
-To deploy this stack just click the button to the left, and follow the instructions that CloudFormation provides in your AWS Dashboard. Alternatively you can download the CF file from [here](https://s3.amazonaws.com/0x4447-drive-cloudformation/vpn-contained.json).
+To deploy this stack just click the button to the left (But before you do that, make sure you are subscribed to [Debian GNU/Linux 9 (Stretch)](https://aws.amazon.com/marketplace/pp/B073HW9SP3)), and follow the instructions that CloudFormation provides in your AWS Dashboard. Alternatively you can download the CF file from [here](https://s3.amazonaws.com/0x4447-drive-cloudformation/vpn-contained.json).
 
 # What deploys
 
