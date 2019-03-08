@@ -3,7 +3,9 @@
 		"Type": "AWS::AutoScaling::LaunchConfiguration",
 		"Properties": {
 			"IamInstanceProfile": { "Ref": "ECSInstanceProfile" },
-			"ImageId": "ami-045f1b3f87ed83659",
+			"ImageId": {
+				"Fn::FindInMap": ["DebianIDs", {"Ref": "AWS::Region"}, "64"]
+			},
 			"AssociatePublicIpAddress": true,
 			"InstanceType": "t3.nano",
 			"SecurityGroups": [ { "Ref": "VPNSecurityGroup" } ],
