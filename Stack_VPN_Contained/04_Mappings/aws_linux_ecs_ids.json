@@ -1,0 +1,23 @@
+{
+	"DebianIDs": {
+		"us-east-2": { "64": "ami-0cca5d0eeadc8c3c4" },
+		"us-east-1": { "64": "ami-0a6a36557ea3b9859" },
+		"us-west-2": { "64": "ami-0d2f82a622136a696" },
+		"us-west-1": { "64": "ami-066a6b3ae13abc046" },
+		"eu-west-3": { "64": "ami-020cc3695affa4b6b" },
+		"eu-west-2": { "64": "ami-0e1065cc4f7231034" },
+		"eu-west-1": { "64": "ami-00921cd1ce43d567a" },
+		"eu-central-1": { "64": "ami-042ae7188819e7e9b" },
+		"eu-north-1": { "64": "ami-0a92075786c5779b9" },
+		"ap-northeast-2": { "64": "ami-0e0d82e1272b5ae8a" },
+		"ap-northeast-1": { "64": "ami-084cb340923dc7101" },
+		"ap-southeast-2": { "64": "ami-051b682e0d63cc816" },
+		"ap-southeast-1": { "64": "ami-0eb4239fe0f64fe58" },
+		"ca-central-1": { "64": "ami-0d9198a587e83919b" },
+		"ap-south-1": { "64": "ami-0d7805fed18723d71" },
+		"sa-east-1": { "64": "ami-0c4cd93b06ee26c34" },
+		"us-gov-east-1": { "64": "ami-04a689185b06da6db" },
+		"us-gov-west-1": { "64": "ami-7a5d361b" }
+
+	}
+}
