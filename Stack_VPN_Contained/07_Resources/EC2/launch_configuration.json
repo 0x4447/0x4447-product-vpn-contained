@@ -145,7 +145,7 @@
 									"/etc/cfn/hooks.d/cfn-auto-reloader.conf"
 								]
 							},
-							"awslogs": {
+							"awslogsd": {
 								"enabled": true,
 								"ensureRunning": true,
 								"files": [
