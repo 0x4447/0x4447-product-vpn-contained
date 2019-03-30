@@ -1,23 +1,23 @@
 {
-	"DebianIDs": {
-		"us-east-2": { "64": "ami-0cca5d0eeadc8c3c4" },
-		"us-east-1": { "64": "ami-0a6a36557ea3b9859" },
-		"us-west-2": { "64": "ami-0d2f82a622136a696" },
-		"us-west-1": { "64": "ami-066a6b3ae13abc046" },
-		"eu-west-3": { "64": "ami-020cc3695affa4b6b" },
-		"eu-west-2": { "64": "ami-0e1065cc4f7231034" },
-		"eu-west-1": { "64": "ami-00921cd1ce43d567a" },
-		"eu-central-1": { "64": "ami-042ae7188819e7e9b" },
-		"eu-north-1": { "64": "ami-0a92075786c5779b9" },
-		"ap-northeast-2": { "64": "ami-0e0d82e1272b5ae8a" },
-		"ap-northeast-1": { "64": "ami-084cb340923dc7101" },
-		"ap-southeast-2": { "64": "ami-051b682e0d63cc816" },
-		"ap-southeast-1": { "64": "ami-0eb4239fe0f64fe58" },
-		"ca-central-1": { "64": "ami-0d9198a587e83919b" },
-		"ap-south-1": { "64": "ami-0d7805fed18723d71" },
-		"sa-east-1": { "64": "ami-0c4cd93b06ee26c34" },
-		"us-gov-east-1": { "64": "ami-04a689185b06da6db" },
-		"us-gov-west-1": { "64": "ami-7a5d361b" }
+	"AWSLinuxECS": {
+		"us-east-2": 		{ "64": "ami-0aa9ee1fc70e57450" },
+		"us-east-1": 		{ "64": "ami-007571470797b8ffa" },
+		"us-west-2": 		{ "64": "ami-0302f3ec240b9d23c" },
+		"us-west-1": 		{ "64": "ami-0935a5e8655c6d896" },
+		"eu-west-3": 		{ "64": "ami-0b419de35e061d9df" },
+		"eu-west-2": 		{ "64": "ami-0380c676fcff67fd5" },
+		"eu-west-1": 		{ "64": "ami-0b8e62ddc09226d0a" },
+		"eu-central-1": 	{ "64": "ami-01b63d839941375df" },
+		"eu-north-1": 		{ "64": "ami-03f8f3eb89dcfe553" },
+		"ap-northeast-2": 	{ "64": "ami-0c57dafd95a102862" },
+		"ap-northeast-1": 	{ "64": "ami-086ca990ae37efc1b" },
+		"ap-southeast-2": 	{ "64": "ami-0d28e5e0f13248294" },
+		"ap-southeast-1": 	{ "64": "ami-0627e2913cf6756ed" },
+		"ca-central-1": 	{ "64": "ami-0835b198c8a7aced4" },
+		"ap-south-1": 		{ "64": "ami-05de310b944d67cde" },
+		"sa-east-1": 		{ "64": "ami-09987452123fadc5b" },
+		"us-gov-east-1": 	{ "64": "ami-07dfc9cdc48d8649a" },
+		"us-gov-west-1": 	{ "64": "ami-914229f0" }
 
 	}
 }
