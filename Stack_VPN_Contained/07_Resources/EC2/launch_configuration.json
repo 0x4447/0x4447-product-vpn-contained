@@ -3,9 +3,7 @@
 		"Type": "AWS::AutoScaling::LaunchConfiguration",
 		"Properties": {
 			"IamInstanceProfile": { "Ref": "ECSInstanceProfile" },
-			"ImageId": {
-				"Fn::FindInMap": ["DebianIDs", {"Ref": "AWS::Region"}, "64"]
-			},
+			"ImageId": { "Fn::FindInMap": ["AWSLinuxECS", { "Ref": "AWS::Region" }, "64"] },
 			"AssociatePublicIpAddress": true,
 			"InstanceType": "t3.nano",
 			"SecurityGroups": [ { "Ref": "VPNSecurityGroup" } ],
@@ -14,17 +12,11 @@
 
 				{ "Fn::Sub": "echo ECS_CLUSTER=${ECSVPNCluster} >> /etc/ecs/ecs.config" },
 
-				"curl -O https://bootstrap.pypa.io/get-pip.py",
-
-				"sudo python get-pip.py",
-
-				"sudo /usr/local/bin/pip install awscli --upgrade",
-
 				{ "Fn::Sub": "EIP_ID=${09xEIP}" },
 
-				"INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)",
+				{ "Fn::Sub": "AWS_REGION=${AWS::Region}" },
 
-				"/usr/local/bin/aws ec2 associate-address --allocation-id $EIP_ID --instance-id $INSTANCE_ID --allow-reassociation --region=us-east-1",
+				"INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)",
 
 				"sudo yum -y update",
 
@@ -34,7 +26,13 @@
 
 				"sudo yum install -y unzip",
 
-				"sudo service awslogs start",
+				"curl -O https://bootstrap.pypa.io/get-pip.py",
+
+				"sudo python get-pip.py",
+
+				"sudo pip install awscli --upgrade",
+
+				"sudo systemctl start awslogsd.service",
 
 				"curl -O https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip",
 
@@ -42,9 +40,11 @@
 
 				"sudo ./install.sh",
 
-				"echo ewoJIm1ldHJpY3MiOiB7CgkJIm1ldHJpY3NfY29sbGVjdGVkIjogewoJCQkiY3B1IjogewoJCQkJInJlc291cmNlcyI6IFsiKiJdLAoJCQkJIm1lYXN1cmVtZW50IjogWyJ1c2FnZV9zeXN0ZW0iLCAidXNhZ2VfdXNlciJdLAoJCQkJInRvdGFsY3B1IjogZmFsc2UKCQkJfSwKCQkJImRpc2siOiB7CgkJCQkicmVzb3VyY2VzIjogWyIqIl0sCgkJCQkibWVhc3VyZW1lbnQiOiBbImZyZWUiLCAidG90YWwiLCAidXNlZCJdCgkJCX0sCgkJCSJwcm9jZXNzZXMiOiB7CgkJCQkibWVhc3VyZW1lbnQiOiBbInJ1bm5pbmciLCAic2xlZXBpbmciLCAiZGVhZCJdCgkJCX0sCgkJCSJtZW0iOiB7CgkJCQkibWVhc3VyZW1lbnQiOiBbImF2YWlsYWJsZSIsICJ0b3RhbCIsICJ1c2VkIl0KCQkJfQoJCX0sCgkJImFwcGVuZF9kaW1lbnNpb25zIjogewoJCQkiSW1hZ2VJZCI6ICIke2F3czpJbWFnZUlkfSIsCgkJCSJJbnN0YW5jZUlkIjogIiR7YXdzOkluc3RhbmNlSWR9IiwKCQkJIkluc3RhbmNlVHlwZSI6ICIke2F3czpJbnN0YW5jZVR5cGV9IiwKCQkJIkF1dG9TY2FsaW5nR3JvdXBOYW1lIjogIiR7YXdzOkF1dG9TY2FsaW5nR3JvdXBOYW1lfSIKCQl9LAoJCSJhZ2dyZWdhdGlvbl9kaW1lbnNpb25zIiA6IFtbIkF1dG9TY2FsaW5nR3JvdXBOYW1lIl0sIFsiSW5zdGFuY2VJZCIsICJJbnN0YW5jZVR5cGUiXV0KCX0KfQ== | base64 --decode > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
+				"echo ewoJIm1ldHJpY3MiOiB7CgkJIm1ldHJpY3NfY29sbGVjdGVkIjogewoJCQkiY3B1IjogewoJCQkJInJlc291cmNlcyI6IFsiKiJdLAoJCQkJIm1lYXN1cmVtZW50IjogWyJ1c2FnZV9zeXN0ZW0iLCAidXNhZ2VfdXNlciJdLAoJCQkJInRvdGFsY3B1IjogZmFsc2UKCQkJfSwKCQkJImRpc2siOiB7CgkJCQkicmVzb3VyY2VzIjogWyIqIl0sCgkJCQkibWVhc3VyZW1lbnQiOiBbImZyZWUiLCAidG90YWwiLCAidXNlZCJdCgkJCX0sCgkJCSJwcm9jZXNzZXMiOiB7CgkJCQkibWVhc3VyZW1lbnQiOiBbInJ1bm5pbmciLCAic2xlZXBpbmciLCAiZGVhZCJdCgkJCX0sCgkJCSJtZW0iOiB7CgkJCQkibWVhc3VyZW1lbnQiOiBbImF2YWlsYWJsZSIsICJ0b3RhbCIsICJ1c2VkIl0KCQkJfQoJCX0sCgkJImFwcGVuZF9kaW1lbnNpb25zIjogewoJCQkiSW1hZ2VJZCI6ICIke2F3czpJbWFnZUlkfSIsCgkJCSJJbnN0YW5jZUlkIjogIiR7YXdzOkluc3RhbmNlSWR9IiwKCQkJIkluc3RhbmNlVHlwZSI6ICIke2F3czpJbnN0YW5jZVR5cGV9IiwKCQkJIkF1dG9TY2FsaW5nR3JvdXBOYW1lIjogIiR7YXdzOkF1dG9TY2FsaW5nR3JvdXBOYW1lfSIKCQl9LAoJCSJhZ2dyZWdhdGlvbl9kaW1lbnNpb25zIiA6IFtbIkF1dG9TY2FsaW5nR3JvdXBOYW1lIl0sIFsiSW5zdGFuY2VJZCIsICJJbnN0YW5jZVR5cGUiXV0KCX0KfQ== | base64 --decode | sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
 
-				"sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s",
+				"sudo amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s",
+
+				"aws ec2 associate-address --allocation-id $EIP_ID --instance-id $INSTANCE_ID --allow-reassociation --region=$AWS_REGION",
 
 				{ "Fn::Sub": "sudo /opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource EC2LaunchConfiguration" },
 
@@ -92,46 +92,11 @@
 								"[general]",
 								"state_file = /var/lib/awslogs/agent-state",
 								"",
-								"[/var/log/dmesg]",
-								"file = /var/log/dmesg",
-								{ "Fn::Sub": "log_group_name = /var/log/dmesg" },
-								{ "Fn::Sub": "log_stream_name = ${ECSVPNCluster}" },
-								"",
 								"[/var/log/messages]",
 								"file = /var/log/messages",
 								{ "Fn::Sub": "log_group_name = /var/log/messages" },
 								{ "Fn::Sub": "log_stream_name = ${ECSVPNCluster}" },
-								"datetime_format = %b %d %H:%M:%S",
-								"",
-								"[/var/log/docker]",
-								"file = /var/log/docker",
-								{ "Fn::Sub": "log_group_name = /var/log/docker" },
-								{ "Fn::Sub": "log_stream_name = ${ECSVPNCluster}" },
-								"datetime_format = %Y-%m-%dT%H:%M:%S.%f",
-								"",
-								"[/var/log/cloud-init.log]",
-								"file = /var/log/cloud-init.log",
-								{ "Fn::Sub": "log_group_name = /var/log/ecs/audit.log" },
-								{ "Fn::Sub": "log_stream_name = ${ECSVPNCluster}" },
-								"datetime_format = %Y-%m-%dT%H:%M:%SZ",
-								"",
-								"[/var/log/ecs/ecs-init.log]",
-								"file = /var/log/ecs/ecs-init.log.*",
-								{ "Fn::Sub": "log_group_name = /var/log/ecs/ecs-init.log" },
-								{ "Fn::Sub": "log_stream_name = ${ECSVPNCluster}" },
-								"datetime_format = %Y-%m-%dT%H:%M:%SZ",
-								"",
-								"[/var/log/ecs/ecs-agent.log]",
-								"file = /var/log/ecs/ecs-agent.log.*",
-								{ "Fn::Sub": "log_group_name = /var/log/ecs/ecs-agent.log" },
-								{ "Fn::Sub": "log_stream_name = ${ECSVPNCluster}" },
-								"datetime_format = %Y-%m-%dT%H:%M:%SZ",
-								"",
-								"[/var/log/ecs/audit.log]",
-								"file = /var/log/ecs/audit.log.*",
-								{ "Fn::Sub": "log_group_name = /var/log/ecs/audit.log" },
-								{ "Fn::Sub": "log_stream_name = ${ECSVPNCluster}" },
-								"datetime_format = %Y-%m-%dT%H:%M:%SZ"
+								"datetime_format = %b %d %H:%M:%S"
 							]]}
 						}
 					},
@@ -145,7 +110,7 @@
 									"/etc/cfn/hooks.d/cfn-auto-reloader.conf"
 								]
 							},
-							"awslogs": {
+							"awslogsd": {
 								"enabled": true,
 								"ensureRunning": true,
 								"files": [
