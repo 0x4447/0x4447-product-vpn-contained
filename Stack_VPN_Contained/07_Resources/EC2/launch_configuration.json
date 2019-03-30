@@ -3,18 +3,18 @@
 		"Type": "AWS::AutoScaling::LaunchConfiguration",
 		"Properties": {
 			"IamInstanceProfile": { "Ref": "ECSInstanceProfile" },
-			"ImageId": { "Fn::FindInMap": ["AWSLinuxECS", { "Ref": "AWS::Region" }, "64"] },
+			"ImageId": { "Fn::FindInMap": [ "OSIDs", { "Ref": "AWS::Region" }, "64" ] },
 			"AssociatePublicIpAddress": true,
 			"InstanceType": "t3.nano",
 			"SecurityGroups": [ { "Ref": "VPNSecurityGroup" } ],
 			"UserData": { "Fn::Base64": { "Fn::Join": ["\n", [
 				"#!/bin/bash",
 
-				{ "Fn::Sub": "echo ECS_CLUSTER=${ECSVPNCluster} >> /etc/ecs/ecs.config" },
-
 				{ "Fn::Sub": "EIP_ID=${09xEIP}" },
 
 				{ "Fn::Sub": "AWS_REGION=${AWS::Region}" },
+
+				{ "Fn::Sub": "echo ECS_CLUSTER=${ECSVPNCluster} >> /etc/ecs/ecs.config" },
 
 				"INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)",
 
