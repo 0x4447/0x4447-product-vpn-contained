@@ -1,5 +1,5 @@
 {
-	"AWSLinuxECS": {
+	"OSIDs": {
 		"us-east-2": 		{ "64": "ami-0aa9ee1fc70e57450" },
 		"us-east-1": 		{ "64": "ami-007571470797b8ffa" },
 		"us-west-2": 		{ "64": "ami-0302f3ec240b9d23c" },

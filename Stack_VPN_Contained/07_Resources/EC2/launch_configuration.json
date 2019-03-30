@@ -3,7 +3,7 @@
 		"Type": "AWS::AutoScaling::LaunchConfiguration",
 		"Properties": {
 			"IamInstanceProfile": { "Ref": "ECSInstanceProfile" },
-			"ImageId": { "Fn::FindInMap": ["AWSLinuxECS", { "Ref": "AWS::Region" }, "64"] },
+			"ImageId": { "Fn::FindInMap": [ "OSIDs", { "Ref": "AWS::Region" }, "64" ] },
 			"AssociatePublicIpAddress": true,
 			"InstanceType": "t3.nano",
 			"SecurityGroups": [ { "Ref": "VPNSecurityGroup" } ],
