@@ -18,6 +18,5 @@
 		"sa-east-1": 		{ "64": "ami-09987452123fadc5b" },
 		"us-gov-east-1": 	{ "64": "ami-07dfc9cdc48d8649a" },
 		"us-gov-west-1": 	{ "64": "ami-914229f0" }
-
 	}
 }
