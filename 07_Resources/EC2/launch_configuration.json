@@ -32,8 +32,6 @@
 
 				"sudo pip install awscli --upgrade",
 
-				"sudo systemctl start awslogsd.service",
-
 				"curl -O https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip",
 
 				"unzip AmazonCloudWatchAgent.zip",
@@ -54,11 +52,6 @@
 		"Metadata": {
 			"AWS::CloudFormation::Init" : {
 				"config" : {
-					"packages" : {
-						"yum": {
-							"awslogs": []
-						}
-					},
 					"files" : {
 						"/etc/cfn/cfn-hup.conf" : {
 							"mode"  : "000644",
@@ -77,27 +70,6 @@
 								"path=Resources.ECSLaunchConfiguration.Metadata.AWS::CloudFormation::Init",
 								{ "Fn::Sub": "action=/opt/aws/bin/cfn-init -v --region ${AWS::Region} --stack ${AWS::StackName} --resource ECSLaunchConfiguration" }
 							]]}
-						},
-						"/etc/awslogs/awscli.conf" : {
-							"content" : { "Fn::Join" : ["\n", [
-								"[plugins]",
-								"cwlogs = cwlogs",
-								"",
-								"[default]",
-								{ "Fn::Sub": "region = ${AWS::Region}" }
-							]]}
-						},
-						"/etc/awslogs/awslogs.conf" : {
-							"content" : { "Fn::Join" : ["\n", [
-								"[general]",
-								"state_file = /var/lib/awslogs/agent-state",
-								"",
-								"[/var/log/messages]",
-								"file = /var/log/messages",
-								{ "Fn::Sub": "log_group_name = /var/log/messages" },
-								{ "Fn::Sub": "log_stream_name = ${ECSVPNCluster}" },
-								"datetime_format = %b %d %H:%M:%S"
-							]]}
 						}
 					},
 					"services": {
@@ -108,14 +80,6 @@
 								"files": [
 									"/etc/cfn/cfn-hup.conf",
 									"/etc/cfn/hooks.d/cfn-auto-reloader.conf"
-								]
-							},
-							"awslogsd": {
-								"enabled": true,
-								"ensureRunning": true,
-								"files": [
-									"/etc/awslogs/awslogs.conf",
-									"/etc/awslogs/awscli.conf"
 								]
 							}
 						}
